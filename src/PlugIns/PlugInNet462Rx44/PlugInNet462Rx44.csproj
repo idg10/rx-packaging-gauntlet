@@ -2,10 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>net462</TargetFramework>
+    <LangVersion>13.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Common\PlugInEntryPoint.WindowsFormsAvailable.cs" Link="PlugInEntryPoint.WindowsFormsAvailable.cs" />
+    <Compile Include="..\Common\PlugInEntryPoint.RxInfo.cs" Link="PlugInEntryPoint.RxInfo.cs" />
+    <Compile Include="..\Common\PlugInEntryPoint.Net46Behaviour.cs" Link="PlugInEntryPoint.Net46Behaviour.cs" />
+    <Compile Include="..\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx4Plus.cs" Link="PlugInEntryPoint.WindowsFormsAvailable.Rx4Plus.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +20,10 @@
       match than a .NET Standard target.
     -->
     <PackageReference Include="System.Reactive" Version="4.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlugIn.Api\PlugIn.Api.csproj" />
   </ItemGroup>
 
 </Project>

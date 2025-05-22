@@ -1,4 +1,6 @@
-﻿using System;
+﻿using PlugIn.Api;
+
+using System;
 using System.Reflection;
 
 namespace PlugInHostNetFx481
@@ -196,7 +198,38 @@ namespace PlugInHostNetFx481
         private static bool TestForBehaviour(string netVersion, string rxVersion, string methodName)
         {
             Assembly plugin = Assembly.LoadFrom($@"..\..\..\..\PlugInNet{netVersion}Rx{rxVersion}\bin\{Configuration}\net{netVersion}\PlugInNet{netVersion}Rx{rxVersion}.dll");
+            Console.WriteLine($"Loaded for net{netVersion}, Rx{rxVersion}");
+            Console.WriteLine($"Assembly: {plugin.FullName}");
+            Console.WriteLine($"Location: {plugin.Location}");
+            
             Type pluginType = plugin.GetType($"PlugInTest.PlugInEntryPoint");
+
+            object o = plugin.CreateInstance($"PlugInTest.PlugInEntryPoint");
+            if (o == null)
+            {
+                Console.WriteLine($"Failed to create instance of {pluginType.FullName}");
+                return false;
+            }
+
+            if (o is not IRxPluginApi instance)
+            {
+                Console.WriteLine($"Plugin does not implement {nameof(IRxPluginApi)}");
+                return false;
+            }
+
+            //MethodInfo getRxFullNameMethod = pluginType.GetMethod("GetRxFullName", BindingFlags.Public | BindingFlags.Static);
+            //string rxFullName = (string)getRxFullNameMethod.Invoke(null, null);
+            string rxFullName = instance.GetRxFullName();
+            Console.WriteLine($"Rx: {rxFullName}");
+            //MethodInfo getRxLocationMethod = pluginType.GetMethod("GetRxLocation", BindingFlags.Public | BindingFlags.Static);
+            //string rxLocation = (string)getRxLocationMethod.Invoke(null, null);
+            string rxLocation = instance.GetRxLocation();
+            Console.WriteLine($"    {rxLocation}");
+            //MethodInfo getRxTargetFrameworkMethod = pluginType.GetMethod("GetRxTargetFramework", BindingFlags.Public | BindingFlags.Static);
+            //string rxTargetFramework = (string)getRxTargetFrameworkMethod.Invoke(null, null);
+            string rxTargetFramework = instance.GetRxTargetFramework();
+            Console.WriteLine($"    {rxTargetFramework}");
+
             MethodInfo method = pluginType.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
             var result = (bool)method.Invoke(null, null);
 

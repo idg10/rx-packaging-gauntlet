@@ -45,10 +45,20 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{E82DF9D0-CCFA-4BD1-A642-717DA586303D}"
 	ProjectSection(SolutionItems) = preProject
 		PlugIns\Common\PlugInEntryPoint.Net46Behaviour.cs = PlugIns\Common\PlugInEntryPoint.Net46Behaviour.cs
-		PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.cs = PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.cs
+		PlugIns\Common\PlugInEntryPoint.RxInfo.cs = PlugIns\Common\PlugInEntryPoint.RxInfo.cs
+		PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx3.cs = PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx3.cs
+		PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx4Plus.cs = PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx4Plus.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{51BDE864-A922-4FAE-A24A-65CCB6794984}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Repros", "Repros", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlugIn.Api", "PlugIn.Api\PlugIn.Api.csproj", "{3D025A41-5439-4B77-8032-93DF58FE08E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckIssue97", "Repro97\CheckIssue97\CheckIssue97.csproj", "{771FA827-01A1-40E6-B33D-07E5BA7DC15E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlugIn.HostDriver", "PlugIn.HostDriver\PlugIn.HostDriver.csproj", "{E3983205-88F3-411A-8707-22FA9067046B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,6 +110,18 @@ Global
 		{464EE5E4-2C80-43B1-8F3D-A2005CC006EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{464EE5E4-2C80-43B1-8F3D-A2005CC006EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{464EE5E4-2C80-43B1-8F3D-A2005CC006EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D025A41-5439-4B77-8032-93DF58FE08E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D025A41-5439-4B77-8032-93DF58FE08E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D025A41-5439-4B77-8032-93DF58FE08E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D025A41-5439-4B77-8032-93DF58FE08E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{771FA827-01A1-40E6-B33D-07E5BA7DC15E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{771FA827-01A1-40E6-B33D-07E5BA7DC15E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{771FA827-01A1-40E6-B33D-07E5BA7DC15E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{771FA827-01A1-40E6-B33D-07E5BA7DC15E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3983205-88F3-411A-8707-22FA9067046B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3983205-88F3-411A-8707-22FA9067046B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3983205-88F3-411A-8707-22FA9067046B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3983205-88F3-411A-8707-22FA9067046B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -117,6 +139,9 @@ Global
 		{DEA4B750-B7E6-4001-8309-7F20F8402FD5} = {205D859B-0181-4166-ADA4-CFD1EBE6642E}
 		{464EE5E4-2C80-43B1-8F3D-A2005CC006EE} = {205D859B-0181-4166-ADA4-CFD1EBE6642E}
 		{E82DF9D0-CCFA-4BD1-A642-717DA586303D} = {205D859B-0181-4166-ADA4-CFD1EBE6642E}
+		{3D025A41-5439-4B77-8032-93DF58FE08E0} = {205D859B-0181-4166-ADA4-CFD1EBE6642E}
+		{771FA827-01A1-40E6-B33D-07E5BA7DC15E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{E3983205-88F3-411A-8707-22FA9067046B} = {205D859B-0181-4166-ADA4-CFD1EBE6642E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43285174-101F-4093-8151-21B8DC3555EB}

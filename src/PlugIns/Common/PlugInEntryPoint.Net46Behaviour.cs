@@ -1,6 +1,8 @@
-﻿using System.Reactive.Linq;
-using System.Threading;
+﻿using PlugIn.Api;
+
 using System;
+using System.Reactive.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PlugInTest
@@ -8,9 +10,9 @@ namespace PlugInTest
     // Note: this file is compiled into all of the plug-ins:
     //  * the .NET 4.5 and .NET 4.6 plug-ins
     //  * all versions of Rx.NET
-    public class PlugInEntryPoint
+    public partial class PlugInEntryPoint
     {
-        public static bool RxExhibitsNet46Behaviour()
+        public RxCancellationFlowBehaviour GetRxCancellationFlowBehaviour()
         {
             // There appears to be exactly one difference between the net45 and net46 builds of Rx 3.0:
             // The net46 one uses the overload of TaskCompletionSource.TrySetCanceled that takes a
@@ -54,8 +56,10 @@ namespace PlugInTest
             catch (AggregateException ae)
             {
                 OperationCanceledException ocx = (OperationCanceledException) ae.InnerException;
-                bool cancelledExceptionIsAssociateadWithTokenPassedToRx = ocx.CancellationToken.Equals(cancel.Token);
-                return cancelledExceptionIsAssociateadWithTokenPassedToRx;
+                bool cancelledExceptionIsAssociatedWithTokenPassedToRx = ocx.CancellationToken.Equals(cancel.Token);
+                return cancelledExceptionIsAssociatedWithTokenPassedToRx
+                    ? RxCancellationFlowBehaviour.FlowedToOperationCanceledException
+                    : RxCancellationFlowBehaviour.NotFlowedToOperationCanceledException;
             }
             throw new InvalidOperationException("Expected Wait to throw an exception");
         }
