@@ -13,10 +13,14 @@
 // 
 
 using PlugIn.HostDriver;
+using PlugIn.HostSerialization;
 
 using System.Text.Json;
 
-string[] hostRuntimes = ["net46", "net472", "net481"];
+string[] hostRuntimes = [
+    //"net462",
+    "net472",
+    "net481"];
 Dictionary<RxVersions, PluginDescriptor[]> pluginsByRxVersion = new()
 {
     { RxVersions.Rx30, [PluginDescriptor.Net45Rx30, PluginDescriptor.Net46Rx30 ]},
@@ -38,22 +42,29 @@ foreach (string hostRuntimeTfm in hostRuntimes)
             where firstPlugIn != secondPlugin
             select (firstPlugIn, secondPlugin);
 
+        JsonSerializerOptions jsonOptions = new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            //DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
         foreach ((PluginDescriptor firstPlugin, PluginDescriptor secondPlugin) in pairs)
         {
-            Result result = await PluginHost.Run(
+            HostOutput result = await PlugInHost.Run(
                 hostRuntimeTfm,
                 firstPlugin,
                 secondPlugin,
                 async stdout =>
                 {
-                    return await JsonSerializer.DeserializeAsync<Result>(stdout);
+                    return (await JsonSerializer.DeserializeAsync<HostOutput>(stdout))!;
+                    //string json = await new StreamReader(stdout).ReadToEndAsync();
+                    //HostOutput result = JsonSerializer.Deserialize<HostOutput>(json)!;
+                    //Console.WriteLine(JsonSerializer.Serialize(result));
+                    //return result;
                 });
-            Console.WriteLine($"Host: {hostRuntimeTfm}, Plugin: {firstPlugin.TargetFrameworkMoniker}, Rx Version: {rxVersion}");
+            Console.WriteLine();
+            Console.WriteLine($"Host: {hostRuntimeTfm}, Plugin1: {firstPlugin}, Plugin2: {secondPlugin}");
+            Console.WriteLine(JsonSerializer.Serialize(result, jsonOptions));
         }
     }
-}
-
-public class Result
-{
-
 }

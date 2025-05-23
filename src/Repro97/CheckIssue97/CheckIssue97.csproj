@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PlugIn.HostDriver\PlugIn.HostDriver.csproj" />
+    <ProjectReference Include="..\..\PlugIns\PlugIn.HostDriver\PlugIn.HostDriver.csproj" />
   </ItemGroup>
 
 </Project>

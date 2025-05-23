@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net462</TargetFramework>
     <LangVersion>13.0</LangVersion>
   </PropertyGroup>
 
@@ -12,12 +12,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- This will resolve to the DLLs in the net46 folder of the Rx NuGet packages. -->
-    <PackageReference Include="System.Reactive" Version="4.4.1" />
+    <!--
+    This will pick up the netstandard2.0 version of .NET because the oldest .NET FX target
+    in Rx 5.0 is net472.
+    -->
+    <PackageReference Include="System.Reactive" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PlugIn.Api\PlugIn.Api.csproj" />
+    <ProjectReference Include="..\PlugIn.Api\PlugIn.Api.csproj" />
   </ItemGroup>
-
 </Project>

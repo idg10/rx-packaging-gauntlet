@@ -17,6 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PlugIn.Api\PlugIn.Api.csproj" />
+    <ProjectReference Include="..\PlugIn.Api\PlugIn.Api.csproj" />
   </ItemGroup>
 </Project>

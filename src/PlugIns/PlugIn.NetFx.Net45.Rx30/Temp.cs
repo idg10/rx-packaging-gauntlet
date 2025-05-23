@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace PlugInNet45Rx30
+namespace PlugIn.NetFx.Net45.Rx30
 {
     internal class Temp
     {

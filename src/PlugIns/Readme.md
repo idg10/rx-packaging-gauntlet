@@ -97,7 +97,7 @@ because that does not have the `AssemblyLoadContext` that enables .NET plug-in h
 ## Demonstrating the Problem
 
 To be able to determine whether future versions of Rx.NET will have the same problems, we need a reliable
-way to reproduce the issue. This folder contains a [.NET Framework 4.8.1 console application](./PlugInHostNetFx481)
+way to reproduce the issue. This folder contains a [.NET Framework 4.8.1 console application](./PlugInHostNetFx)
 that acts as a plug-in host, and a large number of projects building plug-ins targetting various versions
 of .NET Framework, and with dependencies on various versions of Rx.NET.
 

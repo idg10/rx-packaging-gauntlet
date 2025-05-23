@@ -39,6 +39,10 @@
     "oldlast Rx6.0": {
       "commandName": "Project",
       "commandLineArgs": "oldlast 60"
+    },
+    "Profile 1": {
+      "commandName": "Project",
+      "commandLineArgs": "PlugIn.NetFx.net45.Rx30 PlugIn.NetFx.net46.Rx30"
     }
   }
 }
