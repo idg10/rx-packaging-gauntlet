@@ -21,6 +21,7 @@ namespace PlugInHostNetFx481
             if (args.Length != 2)
             {
                 Console.Error.WriteLine("Usage: PlugIn.HostNetFx firstPlugIn secondPlugIn");
+                return 1;
             }
             string firstPlugIn = args[0];
             string secondPlugIn = args[1];

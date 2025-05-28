@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "oldfirst v4.4": {
+      "commandName": "Project",
+      "commandLineArgs": "PlugIn.Dotnet.Net6.0.Rx44 PlugIn.Dotnet.Net8.0.Rx44"
+    }
+  }
+}

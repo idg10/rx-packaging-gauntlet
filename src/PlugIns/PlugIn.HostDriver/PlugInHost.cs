@@ -23,12 +23,12 @@ public static class PlugInHost
             if (hostRuntimeTfm.Contains("."))
             {
                 // .NET Core or .NET 5+
-                launcher = "PlugInHostDotnet";
+                launcher = "PlugIn.HostDotnet";
             }
             else
             {
                 // .NET Framework
-                launcher = "PlugInHostNetFx";
+                launcher = "PlugIn.HostNetFx";
             }
         }
         else

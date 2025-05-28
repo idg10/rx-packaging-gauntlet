@@ -33,7 +33,7 @@ internal class TargetFrameworkMonikerParser
         if (!tfm.StartsWith("net") ||
             indexOfDot < 0 ||
             (length < indexOfDot + 1) ||
-            !int.TryParse(tfm[4..indexOfDot], out majorVersion) ||
+            !int.TryParse(tfm[3..indexOfDot], out majorVersion) ||
             !int.TryParse(tfm[(indexOfDot + 1)..], out int minorVersion))
         {
             majorVersion = minorVersionAsTwoDigitNumber = 0;

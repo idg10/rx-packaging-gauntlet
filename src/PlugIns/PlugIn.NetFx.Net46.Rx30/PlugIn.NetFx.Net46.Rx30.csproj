@@ -9,7 +9,7 @@
     <Compile Include="..\Common\PlugInEntryPoint.RxInfo.cs" Link="PlugInEntryPoint.RxInfo.cs" />
     <Compile Include="..\Common\PlugInEntryPoint.PlugInInfo.cs" Link="PlugInEntryPoint.PlugInInfo.cs" />
     <Compile Include="..\Common\PlugInEntryPoint.Net46Behaviour.cs" Link="PlugInEntryPoint.Net46Behaviour.cs" />
-    <Compile Include="..\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx3.cs" Link="PlugInEntryPoint.WindowsFormsAvailable.Rx3.cs" />
+    <Compile Include="..\Common\PlugInEntryPoint.WindowsFormsAvailable.cs" Link="PlugInEntryPoint.WindowsFormsAvailable.cs" />
   </ItemGroup>
 
   <ItemGroup>

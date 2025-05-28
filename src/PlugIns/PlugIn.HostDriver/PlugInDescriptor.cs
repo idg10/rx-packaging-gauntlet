@@ -12,4 +12,7 @@ public record PlugInDescriptor(string TargetFrameworkMoniker, RxVersions RxVersi
     public static PlugInDescriptor Net462Rx60 { get; } = new PlugInDescriptor("net462", RxVersions.Rx60);
     public static PlugInDescriptor Net472Rx50 { get; } = new PlugInDescriptor("net472", RxVersions.Rx50);
     public static PlugInDescriptor Net472Rx60 { get; } = new PlugInDescriptor("net472", RxVersions.Rx60);
+
+    public static PlugInDescriptor Dotnet60Rx44 { get; } = new PlugInDescriptor("net6.0", RxVersions.Rx44);
+    public static PlugInDescriptor Dotnet80Rx44 { get; } = new PlugInDescriptor("net8.0", RxVersions.Rx44);
 }
