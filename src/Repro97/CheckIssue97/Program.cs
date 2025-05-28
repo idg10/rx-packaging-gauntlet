@@ -12,13 +12,16 @@
 // Things to check:
 // 
 
+using CheckIssue97;
+
 using PlugIn.HostDriver;
 using PlugIn.HostSerialization;
 
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 string[] hostRuntimes = [
-    //"net462",
+    "net462",
     "net472",
     "net481"];
 Dictionary<RxVersions, PluginDescriptor[]> pluginsByRxVersion = new()
@@ -30,10 +33,25 @@ Dictionary<RxVersions, PluginDescriptor[]> pluginsByRxVersion = new()
     { RxVersions.Rx60, [PluginDescriptor.Net462Rx60, PluginDescriptor.Net472Rx60] }
 };
 
+JsonSerializerOptions jsonOptions = new()
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    WriteIndented = true,
+    Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    //DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+};
+
 foreach (string hostRuntimeTfm in hostRuntimes)
 {
     foreach ((RxVersions rxVersion, PluginDescriptor[] plugins) in pluginsByRxVersion)
     {
+        if (plugins.Any(p =>
+            TargetFrameworkMonikerComparer.Instance.Compare(hostRuntimeTfm, p.TargetFrameworkMoniker) < 0))
+        {
+            // Skip this Rx version if the host runtime TFM is lower than the plugin TFM.
+            continue;
+        }
+
         bool expectedToShowIssue97 = rxVersion < RxVersions.Rx31 || rxVersion >= RxVersions.Rx50;
 
         IEnumerable<(PluginDescriptor FirstPlugin, PluginDescriptor SecondPlugin)> pairs =
@@ -42,15 +60,9 @@ foreach (string hostRuntimeTfm in hostRuntimes)
             where firstPlugIn != secondPlugin
             select (firstPlugIn, secondPlugin);
 
-        JsonSerializerOptions jsonOptions = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-            //DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-        };
         foreach ((PluginDescriptor firstPlugin, PluginDescriptor secondPlugin) in pairs)
         {
-            HostOutput result = await PlugInHost.Run(
+            HostOutput output = await PlugInHost.Run(
                 hostRuntimeTfm,
                 firstPlugin,
                 secondPlugin,
@@ -63,8 +75,14 @@ foreach (string hostRuntimeTfm in hostRuntimes)
                     //return result;
                 });
             Console.WriteLine();
-            Console.WriteLine($"Host: {hostRuntimeTfm}, Plugin1: {firstPlugin}, Plugin2: {secondPlugin}");
-            Console.WriteLine(JsonSerializer.Serialize(result, jsonOptions));
+
+            PlugInTestResult testResult = new(
+                hostRuntimeTfm,
+                firstPlugin,
+                secondPlugin,
+                output);
+
+            Console.WriteLine(JsonSerializer.Serialize(testResult, jsonOptions));
         }
     }
 }

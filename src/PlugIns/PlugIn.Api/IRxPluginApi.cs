@@ -2,6 +2,8 @@
 
 public interface IRxPluginApi
 {
+    public string GetPlugInAssemblyLocation();
+
     public string GetRxFullName();
     public string GetRxLocation();
     public string GetRxTargetFramework();

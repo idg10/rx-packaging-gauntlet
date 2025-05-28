@@ -45,6 +45,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{E82DF9D0-CCFA-4BD1-A642-717DA586303D}"
 	ProjectSection(SolutionItems) = preProject
 		PlugIns\Common\PlugInEntryPoint.Net46Behaviour.cs = PlugIns\Common\PlugInEntryPoint.Net46Behaviour.cs
+		PlugIns\Common\PlugInEntryPoint.PlugInInfo.cs = PlugIns\Common\PlugInEntryPoint.PlugInInfo.cs
 		PlugIns\Common\PlugInEntryPoint.RxInfo.cs = PlugIns\Common\PlugInEntryPoint.RxInfo.cs
 		PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx3.cs = PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx3.cs
 		PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx4Plus.cs = PlugIns\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx4Plus.cs

@@ -2,47 +2,43 @@
   "profiles": {
     "oldfirst Rx3.0": {
       "commandName": "Project",
-      "commandLineArgs": "oldfirst 30"
+      "commandLineArgs": "PlugIn.NetFx.Net45.Rx30 PlugIn.NetFx.Net46.Rx30"
     },
     "oldlast Rx3.0": {
       "commandName": "Project",
-      "commandLineArgs": "oldlast 30"
+      "commandLineArgs": "PlugIn.NetFx.Net46.Rx30 PlugIn.NetFx.Net45.Rx30"
     },
     "oldfirst Rx3.1": {
       "commandName": "Project",
-      "commandLineArgs": "oldfirst 31"
+      "commandLineArgs": "PlugIn.NetFx.Net45.Rx31 PlugIn.NetFx.Net46.Rx31"
     },
     "oldlast Rx3.1": {
       "commandName": "Project",
-      "commandLineArgs": "oldlast 31"
+      "commandLineArgs": "PlugIn.NetFx.Net46.Rx31 PlugIn.NetFx.Net45.Rx31"
     },
     "oldfirst Rx4.4": {
       "commandName": "Project",
-      "commandLineArgs": "oldfirst 44"
+      "commandLineArgs": "PlugIn.NetFx.Net46.Rx44 PlugIn.NetFx.Net462.Rx44"
     },
     "oldlast Rx4.4": {
       "commandName": "Project",
-      "commandLineArgs": "oldlast 44"
+      "commandLineArgs": "PlugIn.NetFx.Net462.Rx44 PlugIn.NetFx.Net46.Rx44"
     },
     "oldfirst Rx5.0": {
       "commandName": "Project",
-      "commandLineArgs": "oldfirst 50"
+      "commandLineArgs": "PlugIn.NetFx.Net462.Rx50 PlugIn.NetFx.Net472.Rx50"
     },
     "oldlast Rx5.0": {
       "commandName": "Project",
-      "commandLineArgs": "oldlast 50"
+      "commandLineArgs": "PlugIn.NetFx.Net472.Rx50 PlugIn.NetFx.Net462.Rx50"
     },
     "oldfirst Rx6.0": {
       "commandName": "Project",
-      "commandLineArgs": "oldfirst 60"
+      "commandLineArgs": "PlugIn.NetFx.Net462.Rx60 PlugIn.NetFx.Net472.Rx60"
     },
     "oldlast Rx6.0": {
       "commandName": "Project",
-      "commandLineArgs": "oldlast 60"
-    },
-    "Profile 1": {
-      "commandName": "Project",
-      "commandLineArgs": "PlugIn.NetFx.net45.Rx30 PlugIn.NetFx.net46.Rx30"
+      "commandLineArgs": "PlugIn.NetFx.Net472.Rx60 PlugIn.NetFx.Net462.Rx60"
     }
   }
 }

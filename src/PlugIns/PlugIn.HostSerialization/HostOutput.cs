@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PlugIn.HostSerialization;
+﻿namespace PlugIn.HostSerialization;
 
 public class HostOutput
 {
@@ -13,6 +7,8 @@ public class HostOutput
 
     public class PlugInResult
     {
+        public string PlugInLocation { get; set; }
+     
         public string RxFullAssemblyName { get; set; }
         public string RxLocation { get; set; }
         public string RxTargetFramework { get; set; }

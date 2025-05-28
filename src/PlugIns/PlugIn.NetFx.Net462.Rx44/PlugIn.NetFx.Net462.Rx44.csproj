@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="..\Common\PlugInEntryPoint.RxInfo.cs" Link="PlugInEntryPoint.RxInfo.cs" />
+    <Compile Include="..\Common\PlugInEntryPoint.PlugInInfo.cs" Link="PlugInEntryPoint.PlugInInfo.cs" />
     <Compile Include="..\Common\PlugInEntryPoint.Net46Behaviour.cs" Link="PlugInEntryPoint.Net46Behaviour.cs" />
     <Compile Include="..\Common\PlugInEntryPoint.WindowsFormsAvailable.Rx4Plus.cs" Link="PlugInEntryPoint.WindowsFormsAvailable.Rx4Plus.cs" />
   </ItemGroup>
