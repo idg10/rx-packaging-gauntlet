@@ -24,13 +24,13 @@ string[] hostRuntimes = [
     "net462",
     "net472",
     "net481"];
-Dictionary<RxVersions, PluginDescriptor[]> pluginsByRxVersion = new()
+Dictionary<RxVersions, PlugInDescriptor[]> pluginsByRxVersion = new()
 {
-    { RxVersions.Rx30, [PluginDescriptor.Net45Rx30, PluginDescriptor.Net46Rx30 ]},
-    { RxVersions.Rx31, [PluginDescriptor.Net45Rx31, PluginDescriptor.Net46Rx31 ]},
-    { RxVersions.Rx44, [PluginDescriptor.Net46Rx44, PluginDescriptor.Net462Rx44 ]},
-    { RxVersions.Rx50, [PluginDescriptor.Net462Rx50, PluginDescriptor.Net472Rx50 ]},
-    { RxVersions.Rx60, [PluginDescriptor.Net462Rx60, PluginDescriptor.Net472Rx60] }
+    { RxVersions.Rx30, [PlugInDescriptor.Net45Rx30, PlugInDescriptor.Net46Rx30 ]},
+    { RxVersions.Rx31, [PlugInDescriptor.Net45Rx31, PlugInDescriptor.Net46Rx31 ]},
+    { RxVersions.Rx44, [PlugInDescriptor.Net46Rx44, PlugInDescriptor.Net462Rx44 ]},
+    { RxVersions.Rx50, [PlugInDescriptor.Net462Rx50, PlugInDescriptor.Net472Rx50 ]},
+    { RxVersions.Rx60, [PlugInDescriptor.Net462Rx60, PlugInDescriptor.Net472Rx60] }
 };
 
 JsonSerializerOptions jsonOptions = new()
@@ -43,7 +43,7 @@ JsonSerializerOptions jsonOptions = new()
 
 foreach (string hostRuntimeTfm in hostRuntimes)
 {
-    foreach ((RxVersions rxVersion, PluginDescriptor[] plugins) in pluginsByRxVersion)
+    foreach ((RxVersions rxVersion, PlugInDescriptor[] plugins) in pluginsByRxVersion)
     {
         if (plugins.Any(p =>
             TargetFrameworkMonikerComparer.Instance.Compare(hostRuntimeTfm, p.TargetFrameworkMoniker) < 0))
@@ -54,18 +54,18 @@ foreach (string hostRuntimeTfm in hostRuntimes)
 
         bool expectedToShowIssue97 = rxVersion < RxVersions.Rx31 || rxVersion >= RxVersions.Rx50;
 
-        IEnumerable<(PluginDescriptor FirstPlugin, PluginDescriptor SecondPlugin)> pairs =
+        IEnumerable<(PlugInDescriptor FirstPlugIn, PlugInDescriptor SecondPlugIn)> pairs =
             from firstPlugIn in plugins
-            from secondPlugin in plugins
-            where firstPlugIn != secondPlugin
-            select (firstPlugIn, secondPlugin);
+            from secondPlugIn in plugins
+            where firstPlugIn != secondPlugIn
+            select (firstPlugIn, secondPlugIn);
 
-        foreach ((PluginDescriptor firstPlugin, PluginDescriptor secondPlugin) in pairs)
+        foreach ((PlugInDescriptor firstPlugIn, PlugInDescriptor secondPlugIn) in pairs)
         {
             HostOutput output = await PlugInHost.Run(
                 hostRuntimeTfm,
-                firstPlugin,
-                secondPlugin,
+                firstPlugIn,
+                secondPlugIn,
                 async stdout =>
                 {
                     return (await JsonSerializer.DeserializeAsync<HostOutput>(stdout))!;
@@ -78,8 +78,8 @@ foreach (string hostRuntimeTfm in hostRuntimes)
 
             PlugInTestResult testResult = new(
                 hostRuntimeTfm,
-                firstPlugin,
-                secondPlugin,
+                firstPlugIn,
+                secondPlugIn,
                 output);
 
             Console.WriteLine(JsonSerializer.Serialize(testResult, jsonOptions));

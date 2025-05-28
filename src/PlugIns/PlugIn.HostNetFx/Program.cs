@@ -68,9 +68,9 @@ namespace PlugInHostNetFx481
                 return null;
             }
 
-            if (o is not IRxPluginApi instance)
+            if (o is not IRxPlugInApi instance)
             {
-                Console.Error.WriteLine($"Plugin does not implement {nameof(IRxPluginApi)}");
+                Console.Error.WriteLine($"Plug-in does not implement {nameof(IRxPlugInApi)}");
                 return null;
             }
 

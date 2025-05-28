@@ -5,6 +5,6 @@ namespace CheckIssue97;
 
 public record PlugInTestResult(
     string HostTargetFrameworkMoniker,
-    PluginDescriptor PlugIn1,
-    PluginDescriptor PlugIn2,
+    PlugInDescriptor PlugIn1,
+    PlugInDescriptor PlugIn2,
     HostOutput Result);

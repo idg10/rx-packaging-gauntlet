@@ -2,7 +2,7 @@ using PlugIn.Api;
 
 namespace PlugInTest;
 
-public partial class PlugInEntryPoint : IRxPluginApi
+public partial class PlugInEntryPoint : IRxPlugInApi
 {
     public string GetPlugInAssemblyLocation()
     {

@@ -1,6 +1,6 @@
 ﻿namespace PlugIn.Api;
 
-public interface IRxPluginApi
+public interface IRxPlugInApi
 {
     public string GetPlugInAssemblyLocation();
 

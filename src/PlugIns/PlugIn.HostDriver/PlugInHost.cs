@@ -12,8 +12,8 @@ public static class PlugInHost
 
     public async static Task<TResult> Run<TResult>(
         string hostRuntimeTfm,
-        PluginDescriptor firstPlugin,
-        PluginDescriptor secondPlugin,
+        PlugInDescriptor firstPlugIn,
+        PlugInDescriptor secondPlugIn,
         Func<Stream, Task<TResult>> stdOutStreamToResult)
     {
         string launcher;
@@ -23,12 +23,12 @@ public static class PlugInHost
             if (hostRuntimeTfm.Contains("."))
             {
                 // .NET Core or .NET 5+
-                launcher = "PluginHostDotnet";
+                launcher = "PlugInHostDotnet";
             }
             else
             {
                 // .NET Framework
-                launcher = "Plugin.HostNetFx";
+                launcher = "PlugInHostNetFx";
             }
         }
         else
@@ -81,7 +81,7 @@ public static class PlugInHost
             RedirectStandardOutput = true,
             UseShellExecute = false,
             CreateNoWindow = true,
-            Arguments = $"{GetPlugInArgument(firstPlugin)} {GetPlugInArgument(secondPlugin)}",
+            Arguments = $"{GetPlugInArgument(firstPlugIn)} {GetPlugInArgument(secondPlugIn)}",
             WorkingDirectory = plugInHostExecutableFolder,
         };
 
@@ -109,7 +109,7 @@ public static class PlugInHost
         return result;
     }
 
-    private static string GetPlugInArgument(PluginDescriptor descriptor)
+    private static string GetPlugInArgument(PlugInDescriptor descriptor)
     {
         bool isNetFx = descriptor.TargetFrameworkMoniker.StartsWith("net") && !descriptor.TargetFrameworkMoniker.Contains('.');
         string frameworkNamePart = isNetFx ? "NetFx" : "Dotnet";
