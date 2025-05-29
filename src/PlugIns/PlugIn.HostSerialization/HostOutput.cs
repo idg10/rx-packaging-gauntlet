@@ -12,5 +12,9 @@ public class HostOutput
         public string RxFullAssemblyName { get; set; }
         public string RxLocation { get; set; }
         public string RxTargetFramework { get; set; }
+
+        public bool FlowsCancellationTokenToOperationCancelledException { get; set; }
+
+        public bool SupportsWindowsForms { get; set; }
     }
 }

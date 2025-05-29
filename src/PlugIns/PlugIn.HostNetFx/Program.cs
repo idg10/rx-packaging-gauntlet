@@ -75,19 +75,17 @@ namespace PlugInHostNetFx481
                 return null;
             }
 
-            string plugInLocation = instance.GetPlugInAssemblyLocation();
-
-            string rxFullName = instance.GetRxFullName();
-            string rxLocation = instance.GetRxLocation();
-            string rxTargetFramework = instance.GetRxTargetFramework();
-
             return new HostOutput.PlugInResult
             {
-                PlugInLocation = plugInLocation,
+                PlugInLocation = instance.GetPlugInAssemblyLocation(),
 
-                RxFullAssemblyName = rxFullName,
-                RxLocation = rxLocation,
-                RxTargetFramework = rxTargetFramework
+                RxFullAssemblyName = instance.GetRxFullName(),
+                RxLocation = instance.GetRxLocation(),
+                RxTargetFramework = instance.GetRxTargetFramework(),
+
+                FlowsCancellationTokenToOperationCancelledException =
+                    instance.GetRxCancellationFlowBehaviour() == RxCancellationFlowBehaviour.FlowedToOperationCanceledException,
+                SupportsWindowsForms = instance.IsWindowsFormsSupportAvailable()
             };
         }
     }
