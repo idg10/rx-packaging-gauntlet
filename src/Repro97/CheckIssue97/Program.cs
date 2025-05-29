@@ -47,8 +47,11 @@ JsonSerializerOptions jsonOptions = new()
     //DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
 };
 
+bool isFirstRow = true;
+Console.WriteLine("[");
 await RunTests(netFxHostRuntimes, netFxPluginsByRxVersion);
 await RunTests(dotnetHostRuntimes, dotnetPluginsByRxVersion);
+Console.WriteLine("]");
 
 async Task RunTests(string[] hostRuntimes, Dictionary<RxVersions, PlugInDescriptor[]> pluginsByRxVersion)
 {
@@ -93,6 +96,14 @@ async Task RunTests(string[] hostRuntimes, Dictionary<RxVersions, PlugInDescript
                     secondPlugIn,
                     output);
 
+                if (isFirstRow)
+                {
+                    isFirstRow = false;
+                }
+                else
+                {
+                    Console.WriteLine(",");
+                }
                 Console.WriteLine(JsonSerializer.Serialize(testResult, jsonOptions));
             }
         }
