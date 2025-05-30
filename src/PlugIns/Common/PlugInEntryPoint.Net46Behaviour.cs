@@ -55,7 +55,7 @@ namespace PlugInTest
             }
             catch (AggregateException ae)
             {
-                OperationCanceledException ocx = (OperationCanceledException) ae.InnerException;
+                OperationCanceledException ocx = (OperationCanceledException) ae.InnerException!;
                 bool cancelledExceptionIsAssociatedWithTokenPassedToRx = ocx.CancellationToken.Equals(cancel.Token);
                 return cancelledExceptionIsAssociatedWithTokenPassedToRx
                     ? RxCancellationFlowBehaviour.FlowedToOperationCanceledException

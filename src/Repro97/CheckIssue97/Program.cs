@@ -36,7 +36,24 @@ Dictionary<RxVersions, PlugInDescriptor[]> netFxPluginsByRxVersion = new()
 string[] dotnetHostRuntimes = ["net8.0"];
 Dictionary<RxVersions, PlugInDescriptor[]> dotnetPluginsByRxVersion = new()
 {
-    { RxVersions.Rx44, [PlugInDescriptor.Dotnet60Rx44, PlugInDescriptor.Dotnet80Rx44]},
+    { 
+        RxVersions.Rx44,
+        [
+            PlugInDescriptor.Dotnet50Rx44, PlugInDescriptor.Dotnet50WindowsRx44,
+            PlugInDescriptor.Dotnet60Rx44, PlugInDescriptor.Dotnet60WindowsRx44, PlugInDescriptor.Dotnet60Windows10019041Rx44,
+            PlugInDescriptor.Dotnet80Rx44, PlugInDescriptor.Dotnet80WindowsRx44, PlugInDescriptor.Dotnet80Windows10019041Rx44,
+            PlugInDescriptor.Dotnet90Rx44, PlugInDescriptor.Dotnet90WindowsRx44, PlugInDescriptor.Dotnet90Windows10019041Rx44
+        ]
+    },
+    {
+        RxVersions.Rx50,
+        [
+            PlugInDescriptor.Dotnet50Rx50, PlugInDescriptor.Dotnet50Windows10019041Rx50,
+            PlugInDescriptor.Dotnet60Rx50, PlugInDescriptor.Dotnet60Windows10019041Rx50,
+            PlugInDescriptor.Dotnet80Rx50, PlugInDescriptor.Dotnet80Windows10019041Rx50,
+            PlugInDescriptor.Dotnet90Rx50, PlugInDescriptor.Dotnet90Windows10019041Rx50
+        ]
+    },
 };
 
 JsonSerializerOptions jsonOptions = new()
@@ -57,20 +74,22 @@ async Task RunTests(string[] hostRuntimes, Dictionary<RxVersions, PlugInDescript
 {
     foreach (string hostRuntimeTfm in hostRuntimes)
     {
+        // Assuming we're running on a supported version of Windows 11 or later. This ensures that when we get to
+        // plugins with OS-specific TFMs, the host runtime version comes out as higher than or equal to the plugin TFM
+        // in cases where they match on major and minor versions.
+        string effectiveHostTfm = TargetFrameworkMonikerParser.TryParseNetFxMoniker(hostRuntimeTfm, out _, out _)
+            ? hostRuntimeTfm
+            : $"{hostRuntimeTfm}-windows10.0.22631";
         foreach ((RxVersions rxVersion, PlugInDescriptor[] plugins) in pluginsByRxVersion)
         {
-            if (plugins.Any(p =>
-                TargetFrameworkMonikerComparer.Instance.Compare(hostRuntimeTfm, p.TargetFrameworkMoniker) < 0))
-            {
-                // Skip this Rx version if the host runtime TFM is lower than the plugin TFM.
-                continue;
-            }
+            PlugInDescriptor[] hostablePlugins = plugins.Where(p =>
+                TargetFrameworkMonikerComparer.Instance.Compare(effectiveHostTfm, p.TargetFrameworkMoniker) >= 0).ToArray();
 
             bool expectedToShowIssue97 = rxVersion < RxVersions.Rx31 || rxVersion >= RxVersions.Rx50;
 
             IEnumerable<(PlugInDescriptor FirstPlugIn, PlugInDescriptor SecondPlugIn)> pairs =
-                from firstPlugIn in plugins
-                from secondPlugIn in plugins
+                from firstPlugIn in hostablePlugins
+                from secondPlugIn in hostablePlugins
                 where firstPlugIn != secondPlugIn
                 select (firstPlugIn, secondPlugIn);
 
@@ -82,11 +101,22 @@ async Task RunTests(string[] hostRuntimes, Dictionary<RxVersions, PlugInDescript
                     secondPlugIn,
                     async stdout =>
                     {
-                        return (await JsonSerializer.DeserializeAsync<HostOutput>(stdout))!;
-                        //string json = await new StreamReader(stdout).ReadToEndAsync();
-                        //HostOutput result = JsonSerializer.Deserialize<HostOutput>(json)!;
-                        //Console.WriteLine(JsonSerializer.Serialize(result));
-                        //return result;
+                        MemoryStream stdOutCopy = new();
+                        await stdout.CopyToAsync(stdOutCopy);
+                        stdOutCopy.Seek(0, SeekOrigin.Begin);
+                        try
+                        {
+                            return (await JsonSerializer.DeserializeAsync<HostOutput>(stdOutCopy))!;
+                        }
+                        catch (JsonException x)
+                        {
+                            stdOutCopy.Seek(0, SeekOrigin.Begin);
+                            string stdOutContent = await new StreamReader(stdOutCopy).ReadToEndAsync();
+                            Console.Error.WriteLine($"Error deserializing output for {hostRuntimeTfm} {firstPlugIn.RxVersion} {firstPlugIn.TargetFrameworkMoniker} and {secondPlugIn.RxVersion} {secondPlugIn.TargetFrameworkMoniker}: {x.Message}");
+                            Console.Error.WriteLine("Output:");
+                            Console.Error.WriteLine(stdOutContent);
+                            throw;
+                        }
                     });
                 Console.WriteLine();
 

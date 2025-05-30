@@ -5,14 +5,15 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.RegularExpressions;
 
-if (args is not [string firstPlugIn, string secondPlugIn])
+if (args is not [string firstPlugInRxVersion, string firstPlugInTfm, string secondPlugInRxVersion, string secondPlugInTfm])
 {
-    Console.Error.WriteLine("Usage: PlugIn.HostNetFx firstPlugIn secondPlugIn");
+    Console.Error.WriteLine("Usage: PlugIn.HostDotnet firstPlugInRxVersion firstPlugInTfm secondPlugInRxVersion secondPlugInTfm");
+    Console.Error.WriteLine("E.g.: PlugIn.HostDotnet Rx44 net462 Rx44 net472");
     return 1;
 }
 
-HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugIn);
-HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugIn);
+HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugInRxVersion, firstPlugInTfm);
+HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugInRxVersion, secondPlugInTfm);
 if (result1 is null || result2 is null)
 {
     return 1;
@@ -27,7 +28,7 @@ Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result));
 
 return 0;
 
-static HostOutput.PlugInResult? ExecutePlugIn(string plugInName)
+static HostOutput.PlugInResult? ExecutePlugIn(string rxVersion, string tfm)
 {
 #if DEBUG
     const string Configuration = "Debug";
@@ -35,11 +36,7 @@ static HostOutput.PlugInResult? ExecutePlugIn(string plugInName)
         const string Configuration = "Release";
 #endif
 
-    Match re = Regex.Match(plugInName, @"PlugIn\.(?<Runtime>[^.]+)\.(?<Tfm>.+)\.Rx(?<RxVersion>\d+)");
-    string runtime = re.Groups["Runtime"].Value;
-    string tfm = re.Groups["Tfm"].Value;
-    string rxVersion = re.Groups["RxVersion"].Value;
-
+    string plugInName = $"PlugIn.Dotnet.{rxVersion}";
     string plugInDllPath = Path.GetFullPath($@"..\..\..\..\{plugInName}\bin\{Configuration}\{tfm}\{plugInName}.dll");
     PlugInLoadContext plugInLoadContext = new(plugInDllPath);
     Assembly plugin = plugInLoadContext.LoadFromAssemblyPath(plugInDllPath);

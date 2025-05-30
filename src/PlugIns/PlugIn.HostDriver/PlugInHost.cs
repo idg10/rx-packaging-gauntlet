@@ -66,22 +66,13 @@ public static class PlugInHost
             throw new FileNotFoundException($"PlugIn host executable not found at {plugInHostExecutablePath}");
         }
 
-        //// If we just build the expected path, upper/lower case discrepancies might cause issues on Linux/macOS,
-        //// so we look for a match with a case-insensitive search.
-        //DirectoryInfo? projectFolder = plugInsFolder.GetDirectories().SingleOrDefault(
-        //    d => d.Name.Equals(launcher, StringComparison.InvariantCultureIgnoreCase));
-        //if (projectFolder is null)
-        //{
-        //    throw new DirectoryNotFoundException($"PlugIn host '{launcher}' project folder not found in {plugInsFolder.FullName}");
-        //}
-
         var startInfo = new ProcessStartInfo
         {
             FileName = plugInHostExecutablePath,
             RedirectStandardOutput = true,
             UseShellExecute = false,
             CreateNoWindow = true,
-            Arguments = $"{GetPlugInArgument(firstPlugIn)} {GetPlugInArgument(secondPlugIn)}",
+            Arguments = $"{firstPlugIn.RxVersion} {firstPlugIn.TargetFrameworkMoniker} {secondPlugIn.RxVersion} {secondPlugIn.TargetFrameworkMoniker}",
             WorkingDirectory = plugInHostExecutableFolder,
         };
 

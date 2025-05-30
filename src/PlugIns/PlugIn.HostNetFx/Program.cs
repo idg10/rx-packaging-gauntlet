@@ -18,13 +18,16 @@ namespace PlugInHostNetFx481
         [STAThread]
         static int Main(string[] args)
         {
-            if (args.Length != 2)
+            if (args.Length != 4)
             {
-                Console.Error.WriteLine("Usage: PlugIn.HostNetFx firstPlugIn secondPlugIn");
+                Console.Error.WriteLine("Usage: PlugIn.HostNetFx firstPlugInRxVersion firstPlugInTfm secondPlugInRxVersion secondPlugInTfm");
+                Console.Error.WriteLine("E.g.: PlugIn.HostNetFx Rx44 net6.0 Rx44 net8.0");
                 return 1;
             }
-            string firstPlugIn = args[0];
-            string secondPlugIn = args[1];
+            string firstPlugInRxVersion = args[0];
+            string firstPlugInTfm = args[1];
+            string secondPlugInRxVersion = args[2];
+            string secondPlugInTfm = args[3];
 
             //while (!Debugger.IsAttached)
             //{
@@ -34,8 +37,8 @@ namespace PlugInHostNetFx481
             //Debugger.Break();
 
 
-            HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugIn);
-            HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugIn);
+            HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugInRxVersion, firstPlugInTfm);
+            HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugInRxVersion, secondPlugInTfm);
             if (result1 is null || result2 is null)
             {
                 return 1;
@@ -51,13 +54,9 @@ namespace PlugInHostNetFx481
             return 0;
         }
 
-        private static HostOutput.PlugInResult? ExecutePlugIn(string plugInName)
+        private static HostOutput.PlugInResult? ExecutePlugIn(string rxVersion, string tfm)
         {
-            Match re = Regex.Match(plugInName, @"PlugIn\.(?<Runtime>[^.]+)\.(?<Tfm>[^.]+)\.Rx(?<RxVersion>\d+)");
-            string runtime = re.Groups["Runtime"].Value;
-            string tfm = re.Groups["Tfm"].Value;
-            string rxVersion = re.Groups["RxVersion"].Value;
-
+            string plugInName = $"PlugIn.NetFx.{tfm}.{rxVersion}";
             Assembly plugin = Assembly.LoadFrom($@"..\..\..\..\{plugInName}\bin\{Configuration}\{tfm}\{plugInName}.dll");
             
             Type pluginType = plugin.GetType($"PlugInTest.PlugInEntryPoint");
