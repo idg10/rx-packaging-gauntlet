@@ -1,8 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFrameworks>net462;net472</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+
     <LangVersion>13.0</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,8 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- This will resolve to the DLLs in the net45 folder of the Rx NuGet packages. -->
-    <PackageReference Include="System.Reactive" Version="3.1.0" />
+    <PackageReference Include="System.Reactive" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>

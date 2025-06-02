@@ -56,7 +56,7 @@ namespace PlugInHostNetFx481
 
         private static HostOutput.PlugInResult? ExecutePlugIn(string rxVersion, string tfm)
         {
-            string plugInName = $"PlugIn.NetFx.{tfm}.{rxVersion}";
+            string plugInName = $"PlugIn.NetFx.{rxVersion}";
             Assembly plugin = Assembly.LoadFrom($@"..\..\..\..\{plugInName}\bin\{Configuration}\{tfm}\{plugInName}.dll");
             
             Type pluginType = plugin.GetType($"PlugInTest.PlugInEntryPoint");

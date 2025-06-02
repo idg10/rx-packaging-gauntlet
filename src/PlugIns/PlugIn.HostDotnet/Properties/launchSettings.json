@@ -1,9 +1,5 @@
 {
   "profiles": {
-    "WSL": {
-      "commandName": "WSL2",
-      "distributionName": ""
-    },
     "oldfirst v4.4": {
       "commandName": "Project",
       "commandLineArgs": "Rx44 net6.0 Rx44 net8.0"

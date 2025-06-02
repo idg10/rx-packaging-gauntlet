@@ -1,42 +1,42 @@
 {
   "profiles": {
-    "oldfirst Rx3.0": {
+    "Rx3.0 net45 net46": {
       "commandName": "Project",
       "commandLineArgs": "Rx30 net45 Rx30 net46"
     },
-    "oldlast Rx3.0": {
+    "Rx3.0 net46 net45": {
       "commandName": "Project",
       "commandLineArgs": "Rx30 net46 Rx30 net45"
     },
-    "oldfirst Rx3.1": {
+    "Rx3.1 net45 net46": {
       "commandName": "Project",
       "commandLineArgs": "Rx31 net45 Rx31 net46"
     },
-    "oldlast Rx3.1": {
+    "Rx3.1 net46 net45": {
       "commandName": "Project",
       "commandLineArgs": "Rx31 net46 Rx31 net45"
     },
-    "oldfirst Rx4.4": {
+    "Rx4.4 net46 net462": {
       "commandName": "Project",
       "commandLineArgs": "Rx44 net46 Rx44 net462"
     },
-    "oldlast Rx4.4": {
+    "Rx4.4 net462 net46": {
       "commandName": "Project",
       "commandLineArgs": "Rx44 net462 Rx44 net46"
     },
-    "oldfirst Rx5.0": {
+    "Rx5.0 net462 net472": {
       "commandName": "Project",
       "commandLineArgs": "Rx50 net462 Rx50 net472"
     },
-    "oldlast Rx5.0": {
+    "Rx5.0 net472 net462": {
       "commandName": "Project",
       "commandLineArgs": "Rx50 net472 Rx50 net462"
     },
-    "oldfirst Rx6.0": {
+    "Rx6.0 net462 net472": {
       "commandName": "Project",
       "commandLineArgs": "Rx60 net462 Rx60 net472"
     },
-    "oldlast Rx6.0": {
+    "Rx6.0 net472 net462": {
       "commandName": "Project",
       "commandLineArgs": "Rx60 net472 Rx60 net462"
     }
