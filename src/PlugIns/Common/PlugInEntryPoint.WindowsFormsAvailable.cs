@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace PlugInTest
 {
-    public class PlugInEntryPoint
+    public partial class PlugInEntryPoint
     {
         /// <summary>
         /// Determine whether we're using the netstandard2.0 or the net472 version of Rx by looking
@@ -24,7 +24,7 @@ namespace PlugInTest
         /// Great Unification did not manage to solve.)
         /// </para>
         /// </remarks>
-        public static bool AreWindowsFormsTypesAvailable()
+        public bool IsWindowsFormsSupportAvailable()
         {
             // Using typeof(Observable) means that when the CLR JIT compiles this method, it will
             // have to resolve the System.Reactive assembly.

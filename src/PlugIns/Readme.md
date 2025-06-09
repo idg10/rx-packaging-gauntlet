@@ -54,8 +54,8 @@ version numbers that were applied in v3.1, but those packages are now just type 
 backwards compatibility with old code built for Rx 3.1.)
 
 The decision to drop the version number hack doesn't appear to have been discussed in detail anywhere
-in GitHub (as far we've been able to tell). We think that the prevailing view was that the hack was
-no longer necessary, because the unification rendered it unnecessarily. However, if that was indeed
+in GitHub (as far as we've been able to tell). We think that the prevailing view was that the hack was
+no longer required, because the unification rendered it unnecessary. However, if that was indeed
 the view, it was an oversimplification. In fact, the main reason the Rx-3.1-style hack was no longer
 necessary was that Rx 4.0 happened to have exactly one TFM that would be used on any .NET Framework
 target.
@@ -64,7 +64,7 @@ Superficially that might not look true: it offers both `net46` and `netstandard2
 could in theory be used on .NET Framework 4.6.2 and later. However, the .NET build tools consider the
 `net46` target to be a better match for any .NET Framework version from 4.6 onwards than `netstandard2.0`,
 and `netstandard2.0` is not supported on any version of .NET Framework older than 4.6.2. So on all
-versions of .NET Framework in existence that are new enough to be able to how Rx 4.0 at all, the `net46`
+versions of .NET Framework in existence that are new enough to be able to use Rx 4.0 at all, the `net46`
 target would be selected.
 
 For as long as that was true, the Rx 3.1 era hack was not necessary.
@@ -80,7 +80,15 @@ If you build for .NET Framework 4.6.2, 4.7, or 4.7.1, you will get the `netstand
 .NET Standard 2.0.) And if you build for .NET Framework 4.7.2 or later, you will get the `net472` target.
 
 This means we're back in a new version of the situation that existed for Rx 3.0: two plug-ins could
-target the same version of Rx.NET, but could disagree about which actual DLLs to load.
+target the same version of Rx.NET, but could disagree about which actual DLLs to load. To give a concrete
+example of a problem that this can cause, suppose an application loads a plug-in that was built for
+.NET 4.6.2 and Rx 5.0.0. This will ship a copy of the `netstandard2.0` build of Rx. Now suppose the same
+application goes on to load a plug-in that is built for .NET 4.7.2 and Rx 5.0.0, and which uses an Rx type
+specific to Windows Forms such as `System.Reactive.Concurrency.ControlScheduler`. This will fail because
+it ends up with the `netstandard2.0` version of Rx, which does not include the Windows Forms support.
+If the same two plug-ins load in the reverse order, both end up using the `net472` version of Rx, and
+all is well—the .NET 4.6.2 plug-in will be unaware of the additional features in the `net472` version of Rx,
+and the .NET 4.7.2 plug-in will have what it expects.
 
 This situation continues to exist in current Rx.NET versions. (Again, it only affects .NET Framework,
 because that does not have the `AssemblyLoadContext` that enables .NET plug-in hosts to avoid this problem.)
@@ -89,7 +97,7 @@ because that does not have the `AssemblyLoadContext` that enables .NET plug-in h
 ## Demonstrating the Problem
 
 To be able to determine whether future versions of Rx.NET will have the same problems, we need a reliable
-way to reproduce the issue. This folder contains a [.NET Framework 4.8.1 console application](./PlugInHostNetFx481)
+way to reproduce the issue. This folder contains a [.NET Framework 4.8.1 console application](./PlugInHostNetFx)
 that acts as a plug-in host, and a large number of projects building plug-ins targetting various versions
 of .NET Framework, and with dependencies on various versions of Rx.NET.
 

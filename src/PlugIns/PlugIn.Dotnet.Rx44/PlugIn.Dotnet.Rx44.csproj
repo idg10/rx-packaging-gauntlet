@@ -1,22 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFrameworks>net5.0;net5.0-windows;net6.0;net6.0-windows;net6.0-windows10.0.19041;net8.0;net8.0-windows;net8.0-windows10.0.19041;net9.0;net9.0-windows;net9.0-windows10.0.19041</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <Nullable>enable</Nullable>
     <LangVersion>13.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="..\Common\PlugInEntryPoint.RxInfo.cs" Link="PlugInEntryPoint.RxInfo.cs" />
+    <Compile Include="..\Common\PlugInEntryPoint.PlugInInfo.cs" Link="PlugInEntryPoint.PlugInInfo.cs" />
     <Compile Include="..\Common\PlugInEntryPoint.Net46Behaviour.cs" Link="PlugInEntryPoint.Net46Behaviour.cs" />
     <Compile Include="..\Common\PlugInEntryPoint.WindowsFormsAvailable.cs" Link="PlugInEntryPoint.WindowsFormsAvailable.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- This will resolve to the DLLs in the net472 folder of the System.Reactive NuGet package. -->
-    <PackageReference Include="System.Reactive" Version="5.0.0" />
+    <PackageReference Include="System.Reactive" Version="4.4.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\PlugIn.Api\PlugIn.Api.csproj" />
+    <ProjectReference Include="..\PlugIn.Api\PlugIn.Api.csproj" />
   </ItemGroup>
 </Project>
