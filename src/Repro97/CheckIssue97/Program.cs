@@ -17,6 +17,8 @@ using CheckIssue97;
 using PlugIn.HostDriver;
 using PlugIn.HostSerialization;
 
+using RxGauntlet;
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
