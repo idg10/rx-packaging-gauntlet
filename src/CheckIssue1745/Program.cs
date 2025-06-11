@@ -8,6 +8,7 @@
 // Windows Forms are included in the output.
 
 using RxGauntlet;
+using RxGauntlet.LogModel;
 
 using System.Diagnostics;
 using System.Xml;
@@ -51,20 +52,28 @@ IEnumerable<Scenario> scenarios =
 DirectoryInfo templateProjectFolder = new(
     Path.Combine(AppContext.BaseDirectory, "../../../../Bloat/Bloat.ConsoleWinRtTemplate/"));
 
-foreach(Scenario scenario in scenarios)
+using (var output = new FileStream("CheckIssue1745.json", FileMode.Create, FileAccess.Write, FileShare.Read))
+using (var jsonWriter = new System.Text.Json.Utf8JsonWriter(output))
 {
-    try
+    jsonWriter.WriteStartArray();
+    foreach (Scenario scenario in scenarios)
     {
-        await RunScenario(scenario);
+        try
+        {
+            Issue1745TestRun result = await RunScenario(scenario);
+            result.WriteTo(jsonWriter);
+            jsonWriter.Flush();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error running scenario {scenario}: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
+        }
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error running scenario {scenario}: {ex.Message}");
-        Console.WriteLine(ex.StackTrace);
-    }
+    jsonWriter.WriteEndArray();
 }
 
-async Task RunScenario(Scenario scenario)
+async Task<Issue1745TestRun> RunScenario(Scenario scenario)
 {
     Console.WriteLine(scenario);
     string tfm = scenario.WindowsVersion is string windowsVersion
@@ -154,6 +163,22 @@ async Task RunScenario(Scenario scenario)
         Console.WriteLine($"WPF: {includesWpf}");
         Console.WriteLine($"Windows Forms: {includesWindowsForms}");
         Console.WriteLine();
+
+        var config = Issue1745TestRunConfig.Create(
+            baseNetTfm: scenario.BaseNetTfm,
+            emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
+            rxVersion: rxVersion,
+            useWindowsForms: scenario.UseWindowsForms,
+            useWpf: scenario.UseWpf);
+        if (scenario.WindowsVersion is string wv)
+        {
+            config = config.WithWindowsVersion(wv);
+        }
+
+        return Issue1745TestRun.Create(
+            config: config,
+            deployedWindowsForms:includesWindowsForms,
+            deployedWpf:includesWpf);
     }
     finally
     {
