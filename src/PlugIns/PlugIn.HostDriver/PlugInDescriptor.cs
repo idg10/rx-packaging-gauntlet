@@ -1,4 +1,6 @@
-﻿namespace PlugIn.HostDriver;
+﻿using RxGauntlet;
+
+namespace PlugIn.HostDriver;
 
 public record PlugInDescriptor(string TargetFrameworkMoniker, RxVersions RxVersion)
 {

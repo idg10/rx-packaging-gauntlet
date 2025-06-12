@@ -1,0 +1,28 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rx Gauntlet Bloat Logging Schema",
+  "$id": "http://endjin.com/schemas/request-broker/authentication-providers",
+  "$defs": {
+    "issue1745TestRun": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/issue1745TestRunConfig"
+        },
+        "deployedWpf": "boolean",
+        "deployedWindowsForms": "boolean"
+      }
+    },
+    "issue1745TestRunConfig": {
+      "type": "object",
+      "properties": {
+        "baseNetTfm": "string",
+        "windowsVersion": "string",
+        "useWpf": "boolean",
+        "useWindowsForms": "boolean",
+        "EmitDisableTransitiveFrameworkReferences": "boolean",
+        "rxVersion": "string"
+      }
+    }
+  }
+}
