@@ -8,7 +8,9 @@
 // Windows Forms are included in the output.
 
 using RxGauntlet;
+using RxGauntlet.Build;
 using RxGauntlet.LogModel;
+using RxGauntlet.Xml;
 
 using System.Diagnostics;
 using System.Xml;
@@ -90,59 +92,21 @@ async Task<Issue1745TestRun> RunScenario(Scenario scenario)
         _ => throw new ArgumentOutOfRangeException(nameof(scenario.RxVersion), scenario.RxVersion, null)
     };
 
-    string copyPath = Path.Combine(
-        Path.GetTempPath(),
-        "RxGauntlet",
+    using (var projectClone = ModifiedProjectClone.Create(
+        templateProjectFolder.FullName,
         "CheckIssue1745",
-        DateTime.Now.ToString("yyyyMMdd-HHmmss"));
-
-    Directory.CreateDirectory(copyPath);
-    try
+        (projectFilePath, xmlDoc) => RewriteProjectXmlDocument(
+            projectFilePath,
+            tfm,
+            rxPackage,
+            rxVersion,
+            scenario.UseWpf,
+            scenario.UseWindowsForms,
+            scenario.EmitDisableTransitiveFrameworkReferences,
+            xmlDoc)))
     {
-        foreach (string file in Directory.GetFiles(templateProjectFolder.FullName))
-        {
-            string extension = Path.GetExtension(file).ToLowerInvariant();
-            string relativePath = Path.GetRelativePath(templateProjectFolder.FullName, file);
-            string destinationPath = Path.Combine(copyPath, relativePath);
-
-            switch (extension)
-            {
-                case ".cs":
-                    File.Copy(file, destinationPath, true);
-                    break;
-
-                case ".csproj":
-                    //RewriteProjectFile(file, destinationPath, "net6.0-windows10.0.19041.0", "System.Reactive", "6.0.0");
-                    //RewriteProjectFile(file, destinationPath, "net6.0-windows10.0.19041.0", "System.Reactive.Linq", "3.0.0");
-                    RewriteProjectFile(
-                        file,
-                        destinationPath,
-                        tfm,
-                        rxPackage,
-                        rxVersion,
-                        scenario.UseWpf,
-                        scenario.UseWindowsForms,
-                        scenario.EmitDisableTransitiveFrameworkReferences);
-                    break;
-            }
-        }
-
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "dotnet",
-            UseShellExecute = false,
-
-            // Comment this out to see the output in the console window
-            CreateNoWindow = true,
-            Arguments = $"publish -c Release Bloat.ConsoleWinRtTemplate.csproj",
-            WorkingDirectory = copyPath,
-        };
-
-        using var process = new Process { StartInfo = startInfo };
-        process.Start();
-        await process.WaitForExitAsync();
-
-        string binFolder = Path.Combine(copyPath, "bin");
+        await projectClone.RunDotnetPublish("Bloat.ConsoleWinRtTemplate.csproj");
+        string binFolder = Path.Combine(projectClone.ClonedProjectFolderPath, "bin");
 
         bool includesWpf = false;
         bool includesWindowsForms = false;
@@ -180,48 +144,17 @@ async Task<Issue1745TestRun> RunScenario(Scenario scenario)
             deployedWindowsForms:includesWindowsForms,
             deployedWpf:includesWpf);
     }
-    finally
-    {
-        Directory.Delete(copyPath, true);
-    }
 }
 
-void RewriteProjectFile(
-    string file,
-    string destinationPath,
-    string tfm,
-    string rxPackageName,
-    string rxPackageVersion,
-    bool? useWpf,
-    bool? useWindowsForms,
-    bool emitDisableTransitiveFrameworkReferences)
+static void RewriteProjectXmlDocument(string file, string tfm, string rxPackageName, string rxPackageVersion, bool? useWpf, bool? useWindowsForms, bool emitDisableTransitiveFrameworkReferences, XmlDocument document)
 {
-    XmlDocument document = new();
-    document.Load(file);
-    
-
-    XmlNode targetFrameworkNode = document.SelectSingleNode("/Project/PropertyGroup/TargetFramework")
-        ?? throw new InvalidOperationException($"Did not find <TargetFramework> in {file}");
+    XmlNode targetFrameworkNode = document.GetRequiredNode("/Project/PropertyGroup/TargetFramework");
     targetFrameworkNode.InnerText = tfm;
 
-    XmlNode rxPackageRefNode = document.SelectSingleNode("/Project/ItemGroup/PackageReference[@Include='System.Reactive']")
-        ?? throw new InvalidOperationException($"Did not find <PackageReference> in {file}");
-    XmlAttributeCollection packageRefAttributes = rxPackageRefNode.Attributes!;
+    XmlNode rxPackageRefNode = document.GetRequiredNode("/Project/ItemGroup/PackageReference[@Include='System.Reactive']");
 
-    if (packageRefAttributes["Include"] is not XmlAttribute includeAttribute)
-    {
-        includeAttribute = document.CreateAttribute("Include");
-        packageRefAttributes.Append(includeAttribute);
-    }
-
-    if (packageRefAttributes["Version"] is not XmlAttribute versionAttribute)
-    {
-        versionAttribute = document.CreateAttribute("Version");
-        packageRefAttributes.Append(versionAttribute);
-    }
-
-    includeAttribute.Value = rxPackageName;
-    versionAttribute.Value = rxPackageVersion;
+    rxPackageRefNode.SetAttribute("Include", rxPackageName);
+    rxPackageRefNode.SetAttribute("Version", rxPackageVersion);
 
     if (useWpf.HasValue || useWindowsForms.HasValue)
     {
@@ -255,8 +188,6 @@ void RewriteProjectFile(
         transitiveWorkaroundPropertyGroup.AppendChild(disableTransitiveFrameworkReferencesElement);
         document.SelectSingleNode("/Project")!.AppendChild(transitiveWorkaroundPropertyGroup);
     }
-
-    document.Save(destinationPath);
 }
 
 internal record Scenario(
