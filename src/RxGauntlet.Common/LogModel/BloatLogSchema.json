@@ -11,7 +11,12 @@
         },
         "deployedWpf": "boolean",
         "deployedWindowsForms": "boolean"
-      }
+      },
+      "required": [
+        "config",
+        "deployedWpf",
+        "deployedWindowsForms"
+      ]
     },
     "issue1745TestRunConfig": {
       "type": "object",

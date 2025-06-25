@@ -22,9 +22,8 @@ string[] baseNetTfms =
     "net9.0"
 ];
 
-string?[] windowsVersions =
+string[] windowsVersions =
 [
-    //null,
     "windows10.0.18362.0",
     "windows10.0.19041.0",
     "windows10.0.22000.0"
@@ -133,6 +132,7 @@ async Task<Issue1745TestRun> RunScenario(Scenario scenario)
             emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
             rxVersion: rxVersion,
             useWindowsForms: scenario.UseWindowsForms,
+            windowsVersion: scenario.WindowsVersion,
             useWpf: scenario.UseWpf);
         if (scenario.WindowsVersion is string wv)
         {
@@ -192,7 +192,7 @@ static void RewriteProjectXmlDocument(string file, string tfm, string rxPackageN
 
 internal record Scenario(
     string BaseNetTfm,
-    string? WindowsVersion,
+    string WindowsVersion,
     bool? UseWpf,
     bool? UseWindowsForms,
     bool EmitDisableTransitiveFrameworkReferences,
