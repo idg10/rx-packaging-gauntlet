@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rx Gauntlet Bloat Logging Schema",
+  "$id": "http://endjin.com/schemas/rx-gauntlet/extensionmethodsworkaroundfaillog",
+
+  "$defs": {
+    "extensionMethodsWorkaroundTestRun": {
+      "type": "object",
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/extensionMethodsWorkaroundTestRunConfig"
+        },
+        "buildSucceeded": "boolean",
+        "deployedWpf": "boolean",
+        "deployedWindowsForms": "boolean"
+      },
+      "required": [
+        "config",
+        "deployedWpf",
+        "deployedWindowsForms"
+      ]
+    },
+    "extensionMethodsWorkaroundTestRunConfig": {
+      "type": "object",
+      "properties": {
+        "baseNetTfm": { "type": "string" },
+        "windowsVersion": { "type": "string" },
+        "useWpf": { "type": "boolean" },
+        "useWindowsForms": { "type": "boolean" },
+        "EmitDisableTransitiveFrameworkReferences": { "type": "boolean" },
+        "rxVersion": { "type": "string" }
+      },
+      "required": [
+        "baseNetTfm",
+        "EmitDisableTransitiveFrameworkReferences",
+        "rxVersion"
+      ]
+    },
+
+    "rxVersion": {
+      "type": "object",
+      "properties": {
+        "packageId": { "type": "string" },
+        "version": { "type": "string" },
+        "packageFeed": { "type": "string" }
+      },
+      "required": [ "version" ]
+    }
+  }
+}

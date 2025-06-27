@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="LogModel\BloatLogSchema.json" />
+    <AdditionalFiles Include="LogModel\*.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,12 +1,16 @@
 ﻿// Expecting build failures in some configurations.
 
+using Corvus.Json;
+
 using RxGauntlet;
 using RxGauntlet.Build;
 using RxGauntlet.CommandLine;
+using RxGauntlet.LogModel;
 using RxGauntlet.Xml;
 
 using Spectre.Console.Cli;
 
+using System;
 using System.Xml;
 
 namespace CheckDisableTransitiveFailingExtensionMethod;
@@ -39,14 +43,22 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
             from useTransitiveFrameworksWorkaround in bools
             select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround, rxVersion);
 
-        foreach (Scenario scenario in scenarios)
+        using (var output = new FileStream("CheckExtensionMethodsWorkaround.json", FileMode.Create, FileAccess.Write, FileShare.Read))
+        using (var jsonWriter = new System.Text.Json.Utf8JsonWriter(output))
         {
-            await RunScenario(scenario);
+            jsonWriter.WriteStartArray();
+            foreach (Scenario scenario in scenarios)
+            {
+                ExtensionMethodsWorkaroundTestRun result = await RunScenario(scenario);
+                result.WriteTo(jsonWriter);
+                jsonWriter.Flush();
+            }
+            jsonWriter.WriteEndArray();
         }
 
         return 0;
 
-        async Task RunScenario(Scenario scenario)
+        async Task<ExtensionMethodsWorkaroundTestRun> RunScenario(Scenario scenario)
         {
             Console.WriteLine(scenario);
             string tfm = scenario.WindowsVersion is string windowsVersion
@@ -161,6 +173,40 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                 int result = await projectClone.RunDotnetBuild("ExtensionMethods.DisableTransitiveWorkaroundFail.csproj");
 
                 Console.WriteLine($"{scenario}: {result}");
+                string binFolder = Path.Combine(projectClone.ClonedProjectFolderPath, "bin");
+
+                bool includesWpf = false;
+                bool includesWindowsForms = false;
+                foreach (string file in Directory.GetFiles(binFolder, "*", new EnumerationOptions { RecurseSubdirectories = true }))
+                {
+                    string filename = Path.GetFileName(file);
+                    if (filename.Equals("PresentationFramework.dll", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        includesWpf = true;
+                    }
+
+                    if (filename.Equals("System.Windows.Forms.dll", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        includesWindowsForms = true;
+                    }
+                }
+
+
+                var config = ExtensionMethodsWorkaroundTestRunConfig.Create(
+                    baseNetTfm: scenario.BaseNetTfm,
+                    emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
+                    rxVersion: scenario.RxVersion.ToString(),
+                    useWindowsForms: scenario.UseWindowsForms,
+                    windowsVersion: scenario.WindowsVersion.AsNullableJsonString(),
+                    useWpf: scenario.UseWpf);
+                if (scenario.WindowsVersion is string wv)
+                {
+                    config = config.WithWindowsVersion(wv);
+                }
+                return ExtensionMethodsWorkaroundTestRun.Create(
+                    config: config,
+                    deployedWindowsForms: includesWindowsForms,
+                    deployedWpf: includesWpf);
             }
         }
     }

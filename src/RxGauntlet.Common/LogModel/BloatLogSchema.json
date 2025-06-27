@@ -1,7 +1,7 @@
 ﻿{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Rx Gauntlet Bloat Logging Schema",
-  "$id": "http://endjin.com/schemas/request-broker/authentication-providers",
+  "$id": "http://endjin.com/schemas/rx-gauntlet/bloatlog",
   "$defs": {
     "issue1745TestRun": {
       "type": "object",
@@ -9,8 +9,8 @@
         "config": {
           "$ref": "#/$defs/issue1745TestRunConfig"
         },
-        "deployedWpf": "boolean",
-        "deployedWindowsForms": "boolean"
+        "deployedWpf": { "type": "boolean" },
+        "deployedWindowsForms": { "type": "boolean" }
       },
       "required": [
         "config",
@@ -21,12 +21,12 @@
     "issue1745TestRunConfig": {
       "type": "object",
       "properties": {
-        "baseNetTfm": "string",
-        "windowsVersion": "string",
-        "useWpf": "boolean",
-        "useWindowsForms": "boolean",
-        "EmitDisableTransitiveFrameworkReferences": "boolean",
-        "rxVersion": "string"
+        "baseNetTfm": { "type": "string" },
+        "windowsVersion": { "type": "string" },
+        "useWpf": { "type": "boolean" },
+        "useWindowsForms": { "type": "boolean" },
+        "EmitDisableTransitiveFrameworkReferences": { "type": "boolean" },
+        "rxVersion": { "type": "string" }
       }
     }
   }
