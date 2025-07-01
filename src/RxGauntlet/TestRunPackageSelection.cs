@@ -10,8 +10,8 @@ namespace RxGauntlet;
 /// to specify the main Rx package and also one or more UI-framework-specific pagkages. Where multiple packages
 /// are specified, each entry in this list should have a different <see cref="Package.PackageId"/>.
 /// </param>
-/// <param name="CustomFeed">
+/// <param name="CustomPackageSource">
 /// The URL or local file path of a custom NuGet package source, or <c>null</c> when the public NuGet feed should be
 /// used.
 /// </param>
-internal record TestRunPackageSelection(PackageIdAndVersion[] Packages, string? CustomFeed);
+internal record TestRunPackageSelection(PackageIdAndVersion[] Packages, string? CustomPackageSource);

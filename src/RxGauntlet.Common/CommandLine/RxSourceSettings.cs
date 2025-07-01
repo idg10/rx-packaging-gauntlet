@@ -8,7 +8,7 @@ using System.Diagnostics;
 
 namespace RxGauntlet.CommandLine;
 
-public class RxSourceSettings : CommandSettings
+public class RxSourceSettings : TestSettings
 {
     private PackageIdAndVersion[]? _parsedRxPackages;
 
