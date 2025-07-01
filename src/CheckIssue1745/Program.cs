@@ -7,6 +7,8 @@
 // We should also check an application that doesn't actually use Rx, as a baseline for whether WPF and/or
 // Windows Forms are included in the output.
 
+using NodaTime;
+
 using RxGauntlet;
 using RxGauntlet.Build;
 using RxGauntlet.LogModel;
@@ -127,10 +129,13 @@ async Task<Issue1745TestRun> RunScenario(Scenario scenario)
         Console.WriteLine($"Windows Forms: {includesWindowsForms}");
         Console.WriteLine();
 
-        var config = Issue1745TestRunConfig.Create(
+        // Note: currently this test run has no specialized config so the schema generation
+        // doesn't create a type to represent issue1745TestRunConfig. That's why we use
+        // the common TestRunConfig here.
+        var config = TestRunConfig.Create(
             baseNetTfm: scenario.BaseNetTfm,
             emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
-            rxVersion: rxVersion,
+            rxVersion: NuGetPackage.Create(id: rxPackage, version: rxVersion),
             useWindowsForms: scenario.UseWindowsForms,
             windowsVersion: scenario.WindowsVersion,
             useWpf: scenario.UseWpf);
@@ -142,7 +147,9 @@ async Task<Issue1745TestRun> RunScenario(Scenario scenario)
         return Issue1745TestRun.Create(
             config: config,
             deployedWindowsForms:includesWindowsForms,
-            deployedWpf:includesWpf);
+            deployedWpf:includesWpf,
+            testRunDateTime: OffsetDateTime.FromDateTimeOffset(DateTimeOffset.UtcNow),
+            testRunId: Guid.NewGuid());
     }
 }
 

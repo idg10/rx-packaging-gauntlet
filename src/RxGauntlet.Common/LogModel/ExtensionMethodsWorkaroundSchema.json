@@ -1,50 +1,28 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Rx Gauntlet Bloat Logging Schema",
+  "title": "Rx Gauntlet Logging Schema - Workaround Extension Method Failures",
   "$id": "http://endjin.com/schemas/rx-gauntlet/extensionmethodsworkaroundfaillog",
 
   "$defs": {
     "extensionMethodsWorkaroundTestRun": {
-      "type": "object",
+      "$ref": "./CommonSchema.json#/$defs/testRun",
       "properties": {
         "config": {
           "$ref": "#/$defs/extensionMethodsWorkaroundTestRunConfig"
         },
         "buildSucceeded": "boolean",
-        "deployedWpf": "boolean",
-        "deployedWindowsForms": "boolean"
+
+        "$comment":  "Do we need these in this test?",
+        "deployedWpf": { "type": "boolean" },
+        "deployedWindowsForms": { "type": "boolean" }
       },
       "required": [
-        "config",
-        "deployedWpf",
-        "deployedWindowsForms"
-      ]
-    },
-    "extensionMethodsWorkaroundTestRunConfig": {
-      "type": "object",
-      "properties": {
-        "baseNetTfm": { "type": "string" },
-        "windowsVersion": { "type": "string" },
-        "useWpf": { "type": "boolean" },
-        "useWindowsForms": { "type": "boolean" },
-        "EmitDisableTransitiveFrameworkReferences": { "type": "boolean" },
-        "rxVersion": { "type": "string" }
-      },
-      "required": [
-        "baseNetTfm",
-        "EmitDisableTransitiveFrameworkReferences",
-        "rxVersion"
+        "buildSucceeded"
       ]
     },
 
-    "rxVersion": {
-      "type": "object",
-      "properties": {
-        "packageId": { "type": "string" },
-        "version": { "type": "string" },
-        "packageFeed": { "type": "string" }
-      },
-      "required": [ "version" ]
+    "extensionMethodsWorkaroundTestRunConfig": {
+      "$ref": "./CommonSchema.json#/$defs/testRunConfig"
     }
   }
 }

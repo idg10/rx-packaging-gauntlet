@@ -1,33 +1,23 @@
 ﻿{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Rx Gauntlet Bloat Logging Schema",
+  "title": "Rx Gauntlet Logging Schema - Bloat",
   "$id": "http://endjin.com/schemas/rx-gauntlet/bloatlog",
   "$defs": {
     "issue1745TestRun": {
-      "type": "object",
+      "$ref": "./CommonSchema.json#/$defs/testRun",
       "properties": {
-        "config": {
-          "$ref": "#/$defs/issue1745TestRunConfig"
-        },
+        "config": { "$ref": "#/$defs/issue1745TestRunConfig" },
         "deployedWpf": { "type": "boolean" },
         "deployedWindowsForms": { "type": "boolean" }
       },
       "required": [
-        "config",
         "deployedWpf",
         "deployedWindowsForms"
       ]
     },
+
     "issue1745TestRunConfig": {
-      "type": "object",
-      "properties": {
-        "baseNetTfm": { "type": "string" },
-        "windowsVersion": { "type": "string" },
-        "useWpf": { "type": "boolean" },
-        "useWindowsForms": { "type": "boolean" },
-        "EmitDisableTransitiveFrameworkReferences": { "type": "boolean" },
-        "rxVersion": { "type": "string" }
-      }
+      "$ref": "./CommonSchema.json#/$defs/testRunConfig"
     }
   }
 }

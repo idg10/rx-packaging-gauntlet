@@ -2,6 +2,8 @@
 
 using Corvus.Json;
 
+using NodaTime;
+
 using RxGauntlet;
 using RxGauntlet.Build;
 using RxGauntlet.CommandLine;
@@ -11,6 +13,7 @@ using RxGauntlet.Xml;
 using Spectre.Console.Cli;
 
 using System;
+using System.Diagnostics;
 using System.Xml;
 
 namespace CheckDisableTransitiveFailingExtensionMethod;
@@ -65,6 +68,8 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                 ? $"{scenario.BaseNetTfm}-{windowsVersion}"
                 : scenario.BaseNetTfm;
 
+            string rxPackage, rxVersion;
+            rxPackage = rxVersion = string.Empty;
             using (var projectClone = ModifiedProjectClone.Create(
                 templateProjectFolder,
                 "CheckDisableTransitiveFailingExtensionMethod",
@@ -101,6 +106,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                         {
                             rxPackageRefNode.SetAttribute("Include", singleReplacement.PackageId);
                             rxPackageRefNode.SetAttribute("Version", singleReplacement.Version);
+                            (rxPackage, rxVersion) = (singleReplacement.PackageId, singleReplacement.Version);
                         }
                         else
                         {
@@ -109,8 +115,15 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                             XmlNode packageRefItemGroup = rxPackageRefNode.ParentNode!;
                             packageRefItemGroup.RemoveChild(rxPackageRefNode);
 
+                            bool first = true;
                             foreach (PackageIdAndVersion packageIdAndVersion in replaceSystemReactiveWith)
                             {
+                                if (first)
+                                {
+                                    (rxPackage, rxVersion) = (packageIdAndVersion.PackageId, packageIdAndVersion.Version);
+                                    first = false;
+                                }
+
                                 XmlNode rxNewPackageRefNode = packageRefItemGroup.OwnerDocument!.CreateElement("PackageReference");
                                 rxNewPackageRefNode.SetAttribute("Include", packageIdAndVersion.PackageId);
                                 rxNewPackageRefNode.SetAttribute("Version", packageIdAndVersion.Version);
@@ -120,7 +133,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                     }
                     else
                     {
-                        (string rxPackage, string rxVersion) = scenario.RxVersion switch
+                        (rxPackage, rxVersion) = scenario.RxVersion switch
                         {
                             RxVersions.Rx30 => ("System.Reactive.Linq", "3.0.0"),
                             RxVersions.Rx31 => ("System.Reactive.Linq", "3.1.0"),
@@ -132,8 +145,6 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                         rxPackageRefNode.SetAttribute("Include", rxPackage);
                         rxPackageRefNode.SetAttribute("Version", rxVersion);
                     }
-
-
 
                     if (scenario.UseWpf.HasValue || scenario.UseWindowsForms.HasValue)
                     {
@@ -191,11 +202,12 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                     }
                 }
 
-
-                var config = ExtensionMethodsWorkaroundTestRunConfig.Create(
+                Debug.Assert(!string.IsNullOrWhiteSpace(rxPackage), "rxPackage should not be null or empty.");
+                Debug.Assert(!string.IsNullOrWhiteSpace(rxVersion), "rxVersion should not be null or empty.");
+                var config = TestRunConfig.Create(
                     baseNetTfm: scenario.BaseNetTfm,
                     emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
-                    rxVersion: scenario.RxVersion.ToString(),
+                    rxVersion: NuGetPackage.Create(id: rxPackage, version: rxVersion),
                     useWindowsForms: scenario.UseWindowsForms,
                     windowsVersion: scenario.WindowsVersion.AsNullableJsonString(),
                     useWpf: scenario.UseWpf);
@@ -205,8 +217,11 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                 }
                 return ExtensionMethodsWorkaroundTestRun.Create(
                     config: config,
+                    buildSucceeded: result == 0,
                     deployedWindowsForms: includesWindowsForms,
-                    deployedWpf: includesWpf);
+                    deployedWpf: includesWpf,
+                    testRunDateTime: OffsetDateTime.FromDateTimeOffset(DateTimeOffset.UtcNow),
+                    testRunId: Guid.NewGuid());
             }
         }
     }
