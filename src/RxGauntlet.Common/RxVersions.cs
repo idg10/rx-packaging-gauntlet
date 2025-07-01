@@ -7,4 +7,6 @@ public enum RxVersions
     Rx44,
     Rx50,
     Rx60,
+
+    SpecifiedByArguments
 }
