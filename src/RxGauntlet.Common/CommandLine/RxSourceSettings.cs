@@ -35,7 +35,7 @@ public class RxSourceSettings : CommandSettings
             }
             else
             {
-                ValidationResult rxPackagesValidationResult = ValidateRxPackages();
+                ValidationResult rxPackagesValidationResult = ValidateRxPackages(packageRequired: false);
                 if (!rxPackagesValidationResult.Successful)
                 {
                     throw new InvalidOperationException($"{nameof(RxPackages)} is invalid: {rxPackagesValidationResult.Message}");
@@ -48,25 +48,47 @@ public class RxSourceSettings : CommandSettings
         }
     }
 
-
+    /// <summary>
+    /// Validates the command line argument(s).
+    /// </summary>
+    /// <returns>A validation result.</returns>
+    /// <remarks>
+    /// This just calls <see cref="ValidateRxPackages(bool)"/> with <c>packageRequired</c> set to <c>true</c>.
+    /// Derived classes can override this method if they do want to make the <c>--rx-package</c> argument optional.
+    /// Individual repro projects typically won't do this, but the RxGauntlet tool does.
+    /// </remarks>
     public override ValidationResult Validate()
     {
-        return ValidateRxPackages();
+        return ValidateRxPackages(packageRequired: true);
     }
 
-    private ValidationResult ValidateRxPackages()
+    /// <summary>
+    /// Validates the <c>--rx-package</c> argument(s).
+    /// </summary>
+    /// <param name="packageRequired">
+    /// True if at least one package must be specified. (Individual repro projects typically do this.)
+    /// False if the tool allows no packages to be specified. (The RxGauntlet tool allows this because it
+    /// offers a mode where it runs for all published Rx packages, which is mutually exclusive with the
+    /// <c>--rx-package</c> argument.)
+    /// </param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    protected ValidationResult ValidateRxPackages(bool packageRequired)
     {
         if (this.RxPackages is not string[] rxPackages)
         {
-            // Not a validation failure, because Spectre Console will never make this null. It can
-            // only mean that we're being used in an unsupported way.
+            // Spectre Console will never make this null, so this can only mean that we're being used in an
+            // unsupported way (probably not via Spectre.Console) so we throw instead of reporting a validation
+            // failure.
             throw new InvalidOperationException("RxPackages must not be null.");
         }
 
         if (this.RxPackages.Length == 0)
         {
             _parsedRxPackages = [];
-            return ValidationResult.Success();
+            return packageRequired
+                ? ValidationResult.Error("At least one --rx-package must be specified.")
+                : ValidationResult.Success();
         }
 
         HashSet<string> packageIdsSeen = new(capacity: rxPackages.Length);

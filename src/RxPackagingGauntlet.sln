@@ -60,6 +60,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckDisableTransitiveFaili
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtensionMethods.DisableTransitiveWorkaroundFail", "ExtensionMethods\ExtensionMethods.DisableTransitiveWorkaroundFail\ExtensionMethods.DisableTransitiveWorkaroundFail.csproj", "{9C19F572-AB45-49B1-9E35-7C26C24EE2F1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxGauntlet", "RxGauntlet\RxGauntlet.csproj", "{D60CE019-6A34-4240-8A2D-28790613C308}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -138,6 +140,10 @@ Global
 		{9C19F572-AB45-49B1-9E35-7C26C24EE2F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C19F572-AB45-49B1-9E35-7C26C24EE2F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C19F572-AB45-49B1-9E35-7C26C24EE2F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D60CE019-6A34-4240-8A2D-28790613C308}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D60CE019-6A34-4240-8A2D-28790613C308}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D60CE019-6A34-4240-8A2D-28790613C308}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D60CE019-6A34-4240-8A2D-28790613C308}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

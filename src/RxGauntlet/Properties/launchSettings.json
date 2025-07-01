@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RxGauntlet --all-published-rx": {
+      "commandName": "Project",
+      "commandLineArgs": "--all-published-rx"
+    }
+  }
+}
