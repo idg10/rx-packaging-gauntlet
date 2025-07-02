@@ -2,8 +2,6 @@
 
 using Corvus.Json;
 
-using NodaTime;
-
 using RxGauntlet;
 using RxGauntlet.Build;
 using RxGauntlet.CommandLine;
@@ -12,15 +10,18 @@ using RxGauntlet.Xml;
 
 using Spectre.Console.Cli;
 
-using System;
 using System.Diagnostics;
+using System.Text.Json;
 using System.Xml;
 
 namespace CheckDisableTransitiveFailingExtensionMethod;
 
-internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : AsyncCommand<RxSourceSettings>
+internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : TestCommandBase<TestSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, RxSourceSettings settings)
+    protected override string DefaultOutputFilename => "CheckExtensionMethodsWorkaround.json";
+
+    protected override async Task<int> ExecuteTestAsync(
+        TestDetails testDetails, CommandContext context, TestSettings settings, Utf8JsonWriter jsonWriter)
     {
         PackageIdAndVersion[]? replaceSystemReactiveWith = settings.RxPackagesParsed;
         if (replaceSystemReactiveWith is [])
@@ -46,18 +47,14 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
             from useTransitiveFrameworksWorkaround in bools
             select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround, rxVersion);
 
-        using (var output = new FileStream("CheckExtensionMethodsWorkaround.json", FileMode.Create, FileAccess.Write, FileShare.Read))
-        using (var jsonWriter = new System.Text.Json.Utf8JsonWriter(output))
+        jsonWriter.WriteStartArray();
+        foreach (Scenario scenario in scenarios)
         {
-            jsonWriter.WriteStartArray();
-            foreach (Scenario scenario in scenarios)
-            {
-                ExtensionMethodsWorkaroundTestRun result = await RunScenario(scenario);
-                result.WriteTo(jsonWriter);
-                jsonWriter.Flush();
-            }
-            jsonWriter.WriteEndArray();
+            ExtensionMethodsWorkaroundTestRun result = await RunScenario(scenario);
+            result.WriteTo(jsonWriter);
+            jsonWriter.Flush();
         }
+        jsonWriter.WriteEndArray();
 
         return 0;
 
@@ -179,7 +176,8 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                         transitiveWorkaroundPropertyGroup.AppendChild(disableTransitiveFrameworkReferencesElement);
                         xmlDoc.SelectSingleNode("/Project")!.AppendChild(transitiveWorkaroundPropertyGroup);
                     }
-                }))
+                },
+                settings.PackageSource is string packageSource ? [("loc", packageSource)] : null))
             {
                 int result = await projectClone.RunDotnetBuild("ExtensionMethods.DisableTransitiveWorkaroundFail.csproj");
 
@@ -220,8 +218,8 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Asyn
                     buildSucceeded: result == 0,
                     deployedWindowsForms: includesWindowsForms,
                     deployedWpf: includesWpf,
-                    testRunDateTime: OffsetDateTime.FromDateTimeOffset(DateTimeOffset.UtcNow),
-                    testRunId: Guid.NewGuid());
+                    testRunDateTime: testDetails.TestRunDateTime,
+                    testRunId: testDetails.TestRunId);
             }
         }
     }

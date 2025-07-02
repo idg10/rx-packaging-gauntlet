@@ -4,7 +4,7 @@ using System.ComponentModel;
 
 namespace RxGauntlet.CommandLine;
 
-public class TestSettings : CommandSettings
+public class TestSettings : RxSourceSettings
 {
     [Description("The output path to which to write the test results. Defaults to a file named for the test in the current working directory.")]
     [CommandOption("--output")]

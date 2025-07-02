@@ -8,7 +8,7 @@ using System.Diagnostics;
 
 namespace RxGauntlet.CommandLine;
 
-public class RxSourceSettings : TestSettings
+public class RxSourceSettings : CommandSettings
 {
     private PackageIdAndVersion[]? _parsedRxPackages;
 
@@ -73,7 +73,7 @@ public class RxSourceSettings : TestSettings
     /// </param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    protected ValidationResult ValidateRxPackages(bool packageRequired)
+    public ValidationResult ValidateRxPackages(bool packageRequired)
     {
         if (this.RxPackages is not string[] rxPackages)
         {

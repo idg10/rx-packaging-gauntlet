@@ -8,7 +8,11 @@ using System.Threading.Tasks.Dataflow;
 
 namespace RxGauntlet;
 
-internal class RunGauntlet
+internal class RunGauntlet(
+    TestType[] testTypes,
+    TestRunPackageSelection[] packageSelections,
+    string outputFolder,
+    string testId)
 {
 #if DEBUG
     private const string Configuration = "Debug";
@@ -16,10 +20,15 @@ internal class RunGauntlet
     private const string Configuration = "Release";
 #endif
 
-    internal async Task RunAsync(TestType[] testTypes, TestRunPackageSelection[] packageSelections)
+    internal async Task<int> RunAsync()
     {
-        string testRunDateTimeString = DateTime.UtcNow.ToString("s");
-        string testRunId = Guid.NewGuid().ToString();
+        if (Directory.Exists(outputFolder))
+        {
+            Console.Error.WriteLine($"Output folder {outputFolder} already exists. Each test run should create a new output folder.");
+            return 1;
+        }
+
+        Directory.CreateDirectory(outputFolder);
 
         TransformManyBlock<TestType[], TestType> expandTestTypes = new(types => types);
         TransformManyBlock<TestType, TestTypeAndPackageSelection> expandPackageSelections = new(type => packageSelections
@@ -33,6 +42,8 @@ internal class RunGauntlet
         expandTestTypes.Post(testTypes);
         expandTestTypes.Complete();
         await runTest.Completion;
+
+        return 0;
     }
 
     private async Task RunTestAsync(TestTypeAndPackageSelection typeAndPackageSelection)
@@ -53,13 +64,17 @@ internal class RunGauntlet
         string customFeedArgumentIfRequired = typeAndPackageSelection.PackageSelection.CustomPackageSource is string packageSource
             ? $" --package-source {packageSource}"
             : string.Empty;
+        string testIdArgument = $" --test-id {testId}";
+
+        string outputPath = Path.Combine(outputFolder, testType.OutputName);
+        string outputArgument = $" --output {outputPath}";
         var startInfo = new ProcessStartInfo
         {
             FileName = testRunnerExecutablePath,
-            RedirectStandardOutput = true,
+            //RedirectStandardOutput = true,
             UseShellExecute = false,
             //CreateNoWindow = true,
-            Arguments = packageArguments + customFeedArgumentIfRequired,
+            Arguments = packageArguments + customFeedArgumentIfRequired + testIdArgument + outputArgument,
             WorkingDirectory = testRunnerExecutableFolder,
         };
 

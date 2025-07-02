@@ -3,6 +3,8 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 
+using System.ComponentModel;
+
 namespace RxGauntlet;
 
 /// <summary>
@@ -16,6 +18,14 @@ internal class RxGauntletCommandSettings : RxSourceSettings
 {
     [CommandOption("--all-published-rx")]
     public bool AllPublishedRx { get; init; } = false;
+
+    [CommandOption("-o|--output")]
+    [Description("The output directory for the RxGauntlet results. Defaults to a subfolder of the directory named for the date and time.")]
+    public string? OutputDirectory { get; init; }
+
+    [Description("A unique id to be written into all test result output files, enabling them all to be identified as part of the same test run. Defaults to a value based on the current date and time.")]
+    [CommandOption("--test-id")]
+    public string? TestId { get; init; }
 
     public override ValidationResult Validate()
     {

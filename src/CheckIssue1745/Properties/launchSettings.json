@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "CheckIssue1745": {
+      "commandName": "Project"
+    },
+    "As Orchestrated": {
+      "commandName": "Project",
+      "commandLineArgs": "--rx-package System.Reactive.Net,7.0.0-preview.17.g58342773bd --package-source https://pkgs.dev.azure.com/dotnet/Rx.NET/_packaging/RxNet/nuget/v3/index.json --test-id 2025-07-02_05-54-23-5A860780 --output D:\\idg10\\rx-packaging-gauntlet\\src\\RxGauntlet\\bin\\Debug\\net9.0\\2025-07-02_05-54-23\\CheckIssue1745.json"
+    }
+  }
+}

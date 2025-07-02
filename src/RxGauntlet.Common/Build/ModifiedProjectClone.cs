@@ -17,7 +17,8 @@ public sealed class ModifiedProjectClone : IDisposable
     public static ModifiedProjectClone Create(
         string sourceProjectFolder,
         string copyParentFolderName,
-        Action<string, XmlDocument> modifyProjectFile)
+        Action<string, XmlDocument> modifyProjectFile,
+        (string FeedName, string FeedLocation)[]? additionalPackageSources)
     {
         string copyPath = Path.Combine(
             Path.GetTempPath(),
@@ -51,9 +52,30 @@ public sealed class ModifiedProjectClone : IDisposable
                 }
             }
 
+            if (additionalPackageSources is not null && additionalPackageSources.Length > 0)
+            {
+                // We need to emit a NuGet.config file, because the arguments specified one or more custom package sources
+                string sources = string.Join(Environment.NewLine, additionalPackageSources.Select(
+                    p => $"""    <add key="{p.FeedName}" value="{p.FeedLocation}" />"""));
+                string nuGetConfigContent = $"""
+                            <?xml version="1.0" encoding="utf-8"?>
+                            <configuration>
+                              <packageSources>
+                                <clear />
+                                <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+                            {sources}
+                              </packageSources>
+                            </configuration>
+                            """;
+
+                File.WriteAllText(
+                    Path.Combine(copyPath, "NuGet.config"),
+                    nuGetConfigContent);
+            }
+
             // We're now going to return without error, so we no longer want the finally block
             // to delete the directory. That will now happen when the caller calls Dispose on
-            // the ModiyfiedProjectClone we return..
+            // the ModifiedProjectClone we return..
             ModifiedProjectClone result = clone;
             clone = null;
             return result; 

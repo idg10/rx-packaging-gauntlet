@@ -3,16 +3,14 @@ using RxGauntlet.LogModel;
 
 using Spectre.Console.Cli;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace CheckIssue1745;
 
-internal class CheckDeploymentBloatCommand : AsyncCommand<RxSourceSettings>
+internal class CheckDeploymentBloatCommand : TestCommandBase<TestSettings>
 {
+    protected override string DefaultOutputFilename => "CheckIssue1745.json";
+
     private static readonly string[] baseNetTfms =
     [
         "net6.0",
@@ -30,38 +28,35 @@ internal class CheckDeploymentBloatCommand : AsyncCommand<RxSourceSettings>
     private static readonly bool?[] boolsWithNull = [null, true, false];
     private static readonly bool[] bools = [true, false];
 
-    public override async Task<int> ExecuteAsync(CommandContext context, RxSourceSettings settings)
+    protected override async Task<int> ExecuteTestAsync(
+        TestDetails testDetails, CommandContext context, TestSettings settings, Utf8JsonWriter jsonWriter)
     {
-        string outputPath = settings.OutputPath ?? "CheckIssue1745.json";
-        using (var output = new FileStream(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read))
-        using (var jsonWriter = new System.Text.Json.Utf8JsonWriter(output))
+        jsonWriter.WriteStartArray();
+
+        IEnumerable<Scenario> scenarios =
+            from baseNetTfm in baseNetTfms
+            from windowsVersion in windowsVersions
+            from useWpf in boolsWithNull
+            from useWindowsForms in boolsWithNull
+            from useTransitiveFrameworksWorkaround in bools
+            select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround, settings.RxPackagesParsed, settings.PackageSource);
+
+        foreach (Scenario scenario in scenarios)
         {
-            jsonWriter.WriteStartArray();
-
-            IEnumerable<Scenario> scenarios =
-                from baseNetTfm in baseNetTfms
-                from windowsVersion in windowsVersions
-                from useWpf in boolsWithNull
-                from useWindowsForms in boolsWithNull
-                from useTransitiveFrameworksWorkaround in bools
-                select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround, settings.RxPackagesParsed, settings.PackageSource);
-
-            foreach (Scenario scenario in scenarios)
+            try
             {
-                try
-                {
-                    Issue1745TestRun result = await RunDeploymentBloatCheck.RunAsync(scenario);
-                    result.WriteTo(jsonWriter);
-                    jsonWriter.Flush();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error running scenario {scenario}: {ex.Message}");
-                    Console.WriteLine(ex.StackTrace);
-                }
+                Issue1745TestRun result = await RunDeploymentBloatCheck.RunAsync(
+                    testDetails.TestRunId, testDetails.TestRunDateTime, scenario, settings.PackageSource);
+                result.WriteTo(jsonWriter);
+                jsonWriter.Flush();
             }
-            jsonWriter.WriteEndArray();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error running scenario {scenario}: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+            }
         }
+        jsonWriter.WriteEndArray();
 
         return 0;
     }

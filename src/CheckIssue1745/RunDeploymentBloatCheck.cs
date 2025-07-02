@@ -1,23 +1,16 @@
 ﻿using NodaTime;
 
-using RxGauntlet;
 using RxGauntlet.Build;
-using RxGauntlet.CommandLine;
 using RxGauntlet.LogModel;
 using RxGauntlet.Xml;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace CheckIssue1745;
 
 internal class RunDeploymentBloatCheck
 {
-    public static async Task<Issue1745TestRun> RunAsync(Scenario scenario)
+    public static async Task<Issue1745TestRun> RunAsync(string testRunId, OffsetDateTime testRunDateTime, Scenario scenario, string? packageSource)
     {
         if (scenario.RxPackages is not [PackageIdAndVersion firstRxPackage, ..])
         {
@@ -44,7 +37,8 @@ internal class RunDeploymentBloatCheck
                 scenario.UseWpf,
                 scenario.UseWindowsForms,
                 scenario.EmitDisableTransitiveFrameworkReferences,
-                xmlDoc)))
+                xmlDoc),
+                packageSource is not null ? [("loc", packageSource)] : null))
         {
             await projectClone.RunDotnetPublish("Bloat.ConsoleWinRtTemplate.csproj");
             string binFolder = Path.Combine(projectClone.ClonedProjectFolderPath, "bin");
@@ -72,7 +66,7 @@ internal class RunDeploymentBloatCheck
             // Note: currently this test run has no specialized config so the schema generation
             // doesn't create a type to represent issue1745TestRunConfig. That's why we use
             // the common TestRunConfig here.
-            var config = Issue1745TestRunConfig.Create(
+            var config = TestRunConfig.Create(
                 baseNetTfm: scenario.BaseNetTfm,
                 emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
                 // TODO: shouldn't we be capturing all packages, not just the first?
@@ -90,8 +84,8 @@ internal class RunDeploymentBloatCheck
                 config: config,
                 deployedWindowsForms: includesWindowsForms,
                 deployedWpf: includesWpf,
-                testRunDateTime: OffsetDateTime.FromDateTimeOffset(DateTimeOffset.UtcNow),
-                testRunId: Guid.NewGuid());
+                testRunDateTime: testRunDateTime,
+                testRunId: testRunId);
         }
     }
 
