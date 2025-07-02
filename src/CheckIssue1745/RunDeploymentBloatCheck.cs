@@ -1,4 +1,6 @@
-﻿using NodaTime;
+﻿using Corvus.Json;
+
+using NodaTime;
 
 using RxGauntlet.Build;
 using RxGauntlet.LogModel;
@@ -66,12 +68,16 @@ internal class RunDeploymentBloatCheck
             // Note: currently this test run has no specialized config so the schema generation
             // doesn't create a type to represent issue1745TestRunConfig. That's why we use
             // the common TestRunConfig here.
+            NuGetPackage rxVersionPackage = NuGetPackage.Create(
+                id: firstRxPackage.PackageId,
+                version: firstRxPackage.Version,
+                packageSource: packageSource.AsNullableJsonString());
             var config = TestRunConfig.Create(
                 baseNetTfm: scenario.BaseNetTfm,
                 emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
                 // TODO: shouldn't we be capturing all packages, not just the first?
                 // Also, really want to be sharing this code because all test types need to log this.
-                rxVersion: NuGetPackage.Create(id: firstRxPackage.PackageId, version: firstRxPackage.Version),
+                rxVersion: rxVersionPackage,
                 useWindowsForms: scenario.UseWindowsForms,
                 windowsVersion: scenario.WindowsVersion,
                 useWpf: scenario.UseWpf);

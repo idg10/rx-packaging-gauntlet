@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rx Gauntlet Logging Schema - PlugIn Issue97",
+  "$id": "http://endjin.com/schemas/rx-gauntlet/pluginissue97log",
+  "$defs": {
+    "issue97TestRun": {
+      "$ref": "./CommonSchema.json#/$defs/testRun",
+      "properties": {
+        "config": { "$ref": "#/$defs/issue97TestRunConfig" },
+        "plugIn1": { "$ref": "#/$defs/plugInDetails" },
+        "plugIn2": { "$ref": "#/$defs/plugInDetails" }
+      },
+      "required": [
+        "plugIn1",
+        "plugIn2"
+      ]
+    },
+
+    "issue97TestRunConfig": {
+      "$ref": "./CommonSchema.json#/$defs/testRunConfig"
+    },
+
+    "plugInDetails": {
+      "type": "object",
+      "properties": {
+        "tfm": {
+          "description": "The TFM for which the plug-in was built.",
+          "type": "string"
+        },
+        "rxVersion": {
+          "description": "The version of Rx that the plug-in was built against.",
+          "type": { "$ref": "./CommonSchema.json#/$defs/rxVersion" }
+        }
+      },
+      "required": ["tfm"]
+    }
+  }
+}

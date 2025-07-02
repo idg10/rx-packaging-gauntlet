@@ -60,7 +60,8 @@
     "nuGetPackage": {
       "properties": {
         "id": { "type": "string" },
-        "version": { "type": "string" }
+        "version": { "type": "string" },
+        "packageSource": { "type": "string" }
       },
       "required": [
         "id",

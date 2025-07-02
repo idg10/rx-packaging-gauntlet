@@ -202,10 +202,14 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
 
                 Debug.Assert(!string.IsNullOrWhiteSpace(rxPackage), "rxPackage should not be null or empty.");
                 Debug.Assert(!string.IsNullOrWhiteSpace(rxVersion), "rxVersion should not be null or empty.");
+                NuGetPackage rxVersionPackage = NuGetPackage.Create(
+                    id: rxPackage,
+                    version: rxVersion,
+                    packageSource: settings.PackageSource.AsNullableJsonString());
                 var config = TestRunConfig.Create(
                     baseNetTfm: scenario.BaseNetTfm,
                     emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
-                    rxVersion: NuGetPackage.Create(id: rxPackage, version: rxVersion),
+                    rxVersion: rxVersionPackage,
                     useWindowsForms: scenario.UseWindowsForms,
                     windowsVersion: scenario.WindowsVersion.AsNullableJsonString(),
                     useWpf: scenario.UseWpf);
