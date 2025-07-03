@@ -32,14 +32,13 @@ internal class RunDeploymentBloatCheck
         using (var projectClone = ModifiedProjectClone.Create(
             templateProjectFolder.FullName,
             "CheckIssue1745",
-            (projectFilePath, xmlDoc) => RewriteProjectXmlDocument(
-                projectFilePath,
+            (projectFileRewriter) => RewriteProjectXmlDocument(
+                projectFileRewriter,
                 tfm,
                 scenario.RxPackages,
                 scenario.UseWpf,
                 scenario.UseWindowsForms,
-                scenario.EmitDisableTransitiveFrameworkReferences,
-                xmlDoc),
+                scenario.EmitDisableTransitiveFrameworkReferences),
                 packageSource is not null ? [("loc", packageSource)] : null))
         {
             await projectClone.RunDotnetPublish("Bloat.ConsoleWinRtTemplate.csproj");
@@ -96,71 +95,23 @@ internal class RunDeploymentBloatCheck
     }
 
     static void RewriteProjectXmlDocument(
-        string file,
+        ProjectFileRewriter project,
         string tfm,
         PackageIdAndVersion[] replaceSystemReactiveWith,
         bool? useWpf,
         bool? useWindowsForms,
-        bool emitDisableTransitiveFrameworkReferences,
-        XmlDocument document)
+        bool emitDisableTransitiveFrameworkReferences)
     {
-        XmlNode targetFrameworkNode = document.GetRequiredNode("/Project/PropertyGroup/TargetFramework");
-        targetFrameworkNode.InnerText = tfm;
-
-        XmlNode rxPackageRefNode = document.GetRequiredNode("/Project/ItemGroup/PackageReference[@Include='System.Reactive']");
-
-        if (replaceSystemReactiveWith is [PackageIdAndVersion singleReplacement])
-        {
-            rxPackageRefNode.SetAttribute("Include", singleReplacement.PackageId);
-            rxPackageRefNode.SetAttribute("Version", singleReplacement.Version);
-        }
-        else
-        {
-            // The command line arguments specified multiple packages to replace System.Reactive with,
-            // so we remove the original PackageReference and add new ones.
-            XmlNode packageRefItemGroup = rxPackageRefNode.ParentNode!;
-            packageRefItemGroup.RemoveChild(rxPackageRefNode);
-
-            foreach (PackageIdAndVersion packageIdAndVersion in replaceSystemReactiveWith)
-            {
-                XmlNode rxNewPackageRefNode = packageRefItemGroup.OwnerDocument!.CreateElement("PackageReference");
-                rxNewPackageRefNode.SetAttribute("Include", packageIdAndVersion.PackageId);
-                rxNewPackageRefNode.SetAttribute("Version", packageIdAndVersion.Version);
-                packageRefItemGroup.AppendChild(rxNewPackageRefNode);
-            }
-        }
-
-        if (useWpf.HasValue || useWindowsForms.HasValue)
-        {
-            XmlElement uiFrameworksPropertyGroup = document.CreateElement("PropertyGroup");
-
-            if (useWpf.HasValue)
-            {
-                XmlElement useWpfElement = document.CreateElement("UseWPF");
-                useWpfElement.InnerText = useWpf.Value.ToString();
-                uiFrameworksPropertyGroup.AppendChild(useWpfElement);
-            }
-
-            if (useWindowsForms.HasValue)
-            {
-                XmlElement useWindowsFormsElement = document.CreateElement("UseWindowsForms");
-                useWindowsFormsElement.InnerText = useWindowsForms.Value.ToString();
-                uiFrameworksPropertyGroup.AppendChild(useWindowsFormsElement);
-            }
-
-            document.SelectSingleNode("/Project")!.AppendChild(uiFrameworksPropertyGroup);
-        }
+        project.SetTargetFramework(tfm);
+        project.ReplacePackageReference("System.Reactive", replaceSystemReactiveWith);
+        project.AddUseUiFrameworksIfRequired(useWpf, useWindowsForms);
 
         if (emitDisableTransitiveFrameworkReferences)
         {
             // <PropertyGroup>
             //   <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
             // </PropertyGroup>
-            XmlElement transitiveWorkaroundPropertyGroup = document.CreateElement("PropertyGroup");
-            XmlElement disableTransitiveFrameworkReferencesElement = document.CreateElement("DisableTransitiveFrameworkReferences");
-            disableTransitiveFrameworkReferencesElement.InnerText = "True";
-            transitiveWorkaroundPropertyGroup.AppendChild(disableTransitiveFrameworkReferencesElement);
-            document.SelectSingleNode("/Project")!.AppendChild(transitiveWorkaroundPropertyGroup);
+            project.AddPropertyGroup([new("DisableTransitiveFrameworkReferences", "True")]);
         }
     }
 }

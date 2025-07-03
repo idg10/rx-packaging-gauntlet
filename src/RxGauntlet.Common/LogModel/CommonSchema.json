@@ -45,9 +45,8 @@
       "properties": {
         "package": {
           "description": "The main Rx package used. If multiple packages were used, this is the first",
-          "type": { "$ref": "#/$defs/nuGetPackage" }
+          "$ref": "#/$defs/nuGetPackage"
         },
-        "customFeed": { "type": "string" },
         "allPackages": {
           "description": "A list of all NuGet packages used in the test run (including the one specified ",
           "type": "array",

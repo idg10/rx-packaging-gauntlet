@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Xml;
 
 namespace RxGauntlet.Build;
 
@@ -17,7 +16,7 @@ public sealed class ModifiedProjectClone : IDisposable
     public static ModifiedProjectClone Create(
         string sourceProjectFolder,
         string copyParentFolderName,
-        Action<string, XmlDocument> modifyProjectFile,
+        Action<ProjectFileRewriter> modifyProjectFile,
         (string FeedName, string FeedLocation)[]? additionalPackageSources)
     {
         string copyPath = Path.Combine(
@@ -44,10 +43,9 @@ public sealed class ModifiedProjectClone : IDisposable
                         break;
 
                     case ".csproj":
-                        XmlDocument csProjXmlDoc = new();
-                        csProjXmlDoc.Load(file);
-                        modifyProjectFile(file, csProjXmlDoc);
-                        csProjXmlDoc.Save(destinationPath);
+                        ProjectFileRewriter projectFileRewriter = ProjectFileRewriter.CreateForCsProj(file);
+                        modifyProjectFile(projectFileRewriter);
+                        projectFileRewriter.WriteModified(destinationPath);
                         break;
                 }
             }
@@ -110,23 +108,6 @@ public sealed class ModifiedProjectClone : IDisposable
     public async Task<int> RunDotnetPublish(string csProjName)
     {
         return await RunDotnet($"publish -c Release {csProjName}");
-        //var startInfo = new ProcessStartInfo
-        //{
-        //    FileName = "dotnet",
-        //    UseShellExecute = false,
-
-        //    // Comment this out to see the output in the console window
-        //    //CreateNoWindow = true,
-        //    Arguments = $"publish -c Release {csProjName}",
-        //    WorkingDirectory = copyPath,
-        //};
-
-        //using var process = new Process { StartInfo = startInfo };
-        //process.Start(); 
-        //await process.WaitForExitAsync();
-
-        //Console.WriteLine($"dotnet publish exit code: {process.ExitCode}");
-        //return process.ExitCode;
     }
 
     private async Task<int> RunDotnet(string args)

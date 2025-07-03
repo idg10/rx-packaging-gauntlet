@@ -2,7 +2,7 @@
 
 namespace PlugIn.HostDriver;
 
-public static class PlugInHost
+public class PlugInHost : IDisposable
 {
 #if DEBUG
     const string Configuration = "Debug";
@@ -10,7 +10,14 @@ public static class PlugInHost
         const string Configuration = "Release";
 #endif
 
-    public async static Task<TResult> Run<TResult>(
+    private PlugInBuilder _plugInBuilder = new();
+
+    public void Dispose()
+    {
+        _plugInBuilder.Dispose();
+    }
+
+    public async Task<TResult> Run<TResult>(
         string hostRuntimeTfm,
         PlugInDescriptor firstPlugIn,
         PlugInDescriptor secondPlugIn,
@@ -66,13 +73,16 @@ public static class PlugInHost
             throw new FileNotFoundException($"PlugIn host executable not found at {plugInHostExecutablePath}");
         }
 
+        string firstPlugInPath = await _plugInBuilder.GetPlugInDllPathAsync(firstPlugIn);
+        string secondPlugInPath = await _plugInBuilder.GetPlugInDllPathAsync(secondPlugIn);
+
         var startInfo = new ProcessStartInfo
         {
             FileName = plugInHostExecutablePath,
             RedirectStandardOutput = true,
             UseShellExecute = false,
-            CreateNoWindow = true,
-            Arguments = $"{firstPlugIn.RxVersion} {firstPlugIn.TargetFrameworkMoniker} {secondPlugIn.RxVersion} {secondPlugIn.TargetFrameworkMoniker}",
+            //CreateNoWindow = true,
+            Arguments = $"{firstPlugInPath} {secondPlugInPath}",
             WorkingDirectory = plugInHostExecutableFolder,
         };
 
@@ -98,12 +108,5 @@ public static class PlugInHost
         var result = await resultTask;
 
         return result;
-    }
-
-    private static string GetPlugInArgument(PlugInDescriptor descriptor)
-    {
-        bool isNetFx = descriptor.TargetFrameworkMoniker.StartsWith("net") && !descriptor.TargetFrameworkMoniker.Contains('.');
-        string frameworkNamePart = isNetFx ? "NetFx" : "Dotnet";
-        return $"PlugIn.{frameworkNamePart}.{descriptor.TargetFrameworkMoniker}.{descriptor.RxVersion}";
     }
 }

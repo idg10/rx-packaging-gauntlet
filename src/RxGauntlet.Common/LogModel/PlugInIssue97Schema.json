@@ -29,10 +29,10 @@
         },
         "rxVersion": {
           "description": "The version of Rx that the plug-in was built against.",
-          "type": { "$ref": "./CommonSchema.json#/$defs/rxVersion" }
+          "$ref": "./CommonSchema.json#/$defs/rxVersion"
         }
       },
-      "required": ["tfm"]
+      "required": ["tfm", "rxVersion"]
     }
   }
 }

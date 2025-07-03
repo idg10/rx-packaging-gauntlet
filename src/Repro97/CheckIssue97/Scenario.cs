@@ -2,4 +2,4 @@
 
 namespace CheckIssue97;
 
-internal record Scenario(PlugInDescriptor firstPlugIn, PlugInDescriptor secondPlugIn);
+internal record Scenario(string HostTfm, PlugInDescriptor firstPlugIn, PlugInDescriptor secondPlugIn);

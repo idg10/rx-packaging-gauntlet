@@ -62,6 +62,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtensionMethods.DisableTra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxGauntlet", "RxGauntlet\RxGauntlet.csproj", "{D60CE019-6A34-4240-8A2D-28790613C308}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlugIn", "PlugIns\PlugIn\PlugIn.csproj", "{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -144,6 +146,10 @@ Global
 		{D60CE019-6A34-4240-8A2D-28790613C308}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D60CE019-6A34-4240-8A2D-28790613C308}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D60CE019-6A34-4240-8A2D-28790613C308}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -167,6 +173,7 @@ Global
 		{EE1D0C4E-5F8F-679C-306C-0C82A8532CD6} = {EF07756D-A201-410F-A9E8-9BF4AA74858A}
 		{6C7F5D97-E217-45E5-82A9-583831798A26} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{9C19F572-AB45-49B1-9E35-7C26C24EE2F1} = {E19B846E-40A7-489F-8E6E-65A5CF7B73DF}
+		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A} = {205D859B-0181-4166-ADA4-CFD1EBE6642E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43285174-101F-4093-8151-21B8DC3555EB}

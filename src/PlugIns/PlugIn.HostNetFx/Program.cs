@@ -18,16 +18,13 @@ namespace PlugInHostNetFx481
         [STAThread]
         static int Main(string[] args)
         {
-            if (args.Length != 4)
+            if (args.Length != 2)
             {
-                Console.Error.WriteLine("Usage: PlugIn.HostNetFx firstPlugInRxVersion firstPlugInTfm secondPlugInRxVersion secondPlugInTfm");
-                Console.Error.WriteLine("E.g.: PlugIn.HostNetFx Rx44 net6.0 Rx44 net8.0");
+                Console.Error.WriteLine("Usage: PlugIn.HostNetFx <firstPlugInDllPath> <secondPlugInDllPath>");
                 return 1;
             }
-            string firstPlugInRxVersion = args[0];
-            string firstPlugInTfm = args[1];
-            string secondPlugInRxVersion = args[2];
-            string secondPlugInTfm = args[3];
+            string firstPlugInPath = args[0];
+            string secondPlugInPath = args[1];
 
             //while (!Debugger.IsAttached)
             //{
@@ -37,8 +34,8 @@ namespace PlugInHostNetFx481
             //Debugger.Break();
 
 
-            HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugInRxVersion, firstPlugInTfm);
-            HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugInRxVersion, secondPlugInTfm);
+            HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugInPath);
+            HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugInPath);
             if (result1 is null || result2 is null)
             {
                 return 1;
@@ -54,10 +51,9 @@ namespace PlugInHostNetFx481
             return 0;
         }
 
-        private static HostOutput.PlugInResult? ExecutePlugIn(string rxVersion, string tfm)
+        private static HostOutput.PlugInResult? ExecutePlugIn(string plugInDllPath)
         {
-            string plugInName = $"PlugIn.NetFx.{rxVersion}";
-            Assembly plugin = Assembly.LoadFrom($@"..\..\..\..\{plugInName}\bin\{Configuration}\{tfm}\{plugInName}.dll");
+            Assembly plugin = Assembly.LoadFrom(plugInDllPath);
             
             Type pluginType = plugin.GetType($"PlugInTest.PlugInEntryPoint");
 

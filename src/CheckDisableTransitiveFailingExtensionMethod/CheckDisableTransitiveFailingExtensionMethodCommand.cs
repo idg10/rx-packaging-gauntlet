@@ -32,20 +32,18 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
         string templateProjectFolder =
             Path.Combine(AppContext.BaseDirectory, "../../../../ExtensionMethods/ExtensionMethods.DisableTransitiveWorkaroundFail/");
 
-        RxVersions[] rxVersions = [replaceSystemReactiveWith is null ? RxVersions.Rx60 : RxVersions.SpecifiedByArguments];
         string[] baseNetTfms = ["net8.0"];
         string?[] windowsVersions = [null, "windows10.0.19041.0"];
         bool?[] boolsWithNull = [null, true, false];
         bool[] bools = [true, false];
 
         IEnumerable<Scenario> scenarios =
-            from rxVersion in rxVersions
             from baseNetTfm in baseNetTfms
             from windowsVersion in windowsVersions
             from useWpf in (windowsVersion is null ? [false] : boolsWithNull)
             from useWindowsForms in (windowsVersion is null ? [false] : boolsWithNull)
             from useTransitiveFrameworksWorkaround in bools
-            select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround, rxVersion);
+            select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround);
 
         jsonWriter.WriteStartArray();
         foreach (Scenario scenario in scenarios)
@@ -70,111 +68,23 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
             using (var projectClone = ModifiedProjectClone.Create(
                 templateProjectFolder,
                 "CheckDisableTransitiveFailingExtensionMethod",
-                (projectFilePath, xmlDoc) =>
+                (project) =>
                 {
-                    if (settings.PackageSource is string packageSource)
-                    {
-                        // We need to emit a NuGet.config file, because the arguments specified a custom package source
-                        string nuGetConfigContent = $"""
-                            <?xml version="1.0" encoding="utf-8"?>
-                            <configuration>
-                              <packageSources>
-                                <clear />
-                                <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-                                <add key="AdditionalSource" value="{packageSource}" />
-                              </packageSources>
-                            </configuration>
-                            """;
+                    project.SetTargetFramework(tfm);
 
-                        string projectFolderPath = Path.GetDirectoryName(projectFilePath) ??
-                            throw new InvalidOperationException("Project file path does not have a directory component.");
-                        File.WriteAllText(
-                            Path.Combine(projectFolderPath, "NuGet.config"),
-                            nuGetConfigContent);
-                    }
-
-                    XmlNode targetFrameworkNode = xmlDoc.GetRequiredNode("/Project/PropertyGroup/TargetFramework");
-                    targetFrameworkNode.InnerText = tfm;
-
-                    XmlNode rxPackageRefNode = xmlDoc.GetRequiredNode("/Project/ItemGroup/PackageReference[@Include='System.Reactive']");
                     if (replaceSystemReactiveWith is not null)
                     {
-                        if (replaceSystemReactiveWith is [PackageIdAndVersion singleReplacement])
-                        {
-                            rxPackageRefNode.SetAttribute("Include", singleReplacement.PackageId);
-                            rxPackageRefNode.SetAttribute("Version", singleReplacement.Version);
-                            (rxPackage, rxVersion) = (singleReplacement.PackageId, singleReplacement.Version);
-                        }
-                        else
-                        {
-                            // The command line arguments specified multiple packages to replace System.Reactive with,
-                            // so we remove the original PackageReference and add new ones.
-                            XmlNode packageRefItemGroup = rxPackageRefNode.ParentNode!;
-                            packageRefItemGroup.RemoveChild(rxPackageRefNode);
-
-                            bool first = true;
-                            foreach (PackageIdAndVersion packageIdAndVersion in replaceSystemReactiveWith)
-                            {
-                                if (first)
-                                {
-                                    (rxPackage, rxVersion) = (packageIdAndVersion.PackageId, packageIdAndVersion.Version);
-                                    first = false;
-                                }
-
-                                XmlNode rxNewPackageRefNode = packageRefItemGroup.OwnerDocument!.CreateElement("PackageReference");
-                                rxNewPackageRefNode.SetAttribute("Include", packageIdAndVersion.PackageId);
-                                rxNewPackageRefNode.SetAttribute("Version", packageIdAndVersion.Version);
-                                packageRefItemGroup.AppendChild(rxNewPackageRefNode);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        (rxPackage, rxVersion) = scenario.RxVersion switch
-                        {
-                            RxVersions.Rx30 => ("System.Reactive.Linq", "3.0.0"),
-                            RxVersions.Rx31 => ("System.Reactive.Linq", "3.1.0"),
-                            RxVersions.Rx44 => ("System.Reactive", "4.4.1"),
-                            RxVersions.Rx50 => ("System.Reactive", "5.0.0"),
-                            RxVersions.Rx60 => ("System.Reactive", "6.0.1"),
-                            _ => throw new ArgumentOutOfRangeException(nameof(scenario.RxVersion), scenario.RxVersion, null)
-                        };
-                        rxPackageRefNode.SetAttribute("Include", rxPackage);
-                        rxPackageRefNode.SetAttribute("Version", rxVersion);
+                        project.ReplacePackageReference("System.Reactive", replaceSystemReactiveWith);
                     }
 
-                    if (scenario.UseWpf.HasValue || scenario.UseWindowsForms.HasValue)
-                    {
-                        XmlElement uiFrameworksPropertyGroup = xmlDoc.CreateElement("PropertyGroup");
-
-                        if (scenario.UseWpf.HasValue)
-                        {
-                            XmlElement useWpfElement = xmlDoc.CreateElement("UseWPF");
-                            useWpfElement.InnerText = scenario.UseWpf.Value.ToString();
-                            uiFrameworksPropertyGroup.AppendChild(useWpfElement);
-                        }
-
-                        if (scenario.UseWindowsForms.HasValue)
-                        {
-                            XmlElement useWindowsFormsElement = xmlDoc.CreateElement("UseWindowsForms");
-                            useWindowsFormsElement.InnerText = scenario.UseWindowsForms.Value.ToString();
-                            uiFrameworksPropertyGroup.AppendChild(useWindowsFormsElement);
-                        }
-
-                        xmlDoc.SelectSingleNode("/Project")!.AppendChild(uiFrameworksPropertyGroup);
-                    }
-
+                    project.AddUseUiFrameworksIfRequired(scenario.UseWpf, scenario.UseWindowsForms);
 
                     if (scenario.EmitDisableTransitiveFrameworkReferences)
                     {
                         // <PropertyGroup>
                         //   <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
                         // </PropertyGroup>
-                        XmlElement transitiveWorkaroundPropertyGroup = xmlDoc.CreateElement("PropertyGroup");
-                        XmlElement disableTransitiveFrameworkReferencesElement = xmlDoc.CreateElement("DisableTransitiveFrameworkReferences");
-                        disableTransitiveFrameworkReferencesElement.InnerText = "True";
-                        transitiveWorkaroundPropertyGroup.AppendChild(disableTransitiveFrameworkReferencesElement);
-                        xmlDoc.SelectSingleNode("/Project")!.AppendChild(transitiveWorkaroundPropertyGroup);
+                        project.AddPropertyGroup([new("DisableTransitiveFrameworkReferences", "True")]);
                     }
                 },
                 settings.PackageSource is string packageSource ? [("loc", packageSource)] : null))
@@ -232,6 +142,5 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
         string? WindowsVersion,
         bool? UseWpf,
         bool? UseWindowsForms,
-        bool EmitDisableTransitiveFrameworkReferences,
-        RxVersions RxVersion);
+        bool EmitDisableTransitiveFrameworkReferences);
 }

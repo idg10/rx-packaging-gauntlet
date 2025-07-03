@@ -1,6 +1,4 @@
-﻿using RxGauntlet;
-using RxGauntlet.CommandLine;
-using RxGauntlet.LogModel;
+﻿using RxGauntlet.CommandLine;
 
 using Spectre.Console.Cli;
 
@@ -22,13 +20,12 @@ internal class CheckPluginIssue97Command : TestCommandBase<TestSettings>
     {
         jsonWriter.WriteStartArray();
 
-        Scenario scenario = new(
-            new PlugIn.HostDriver.PlugInDescriptor("net45", RxVersions.Rx30),
-            new PlugIn.HostDriver.PlugInDescriptor("net45", RxVersions.Rx30));
-        Issue97TestRun result = await RunCheckPluginIssue97.RunAsync(
-            testDetails.TestRunId, testDetails.TestRunDateTime, scenario, settings.PackageSource);
-
-        result.WriteTo(jsonWriter);
+        await RunCheckPluginIssue97.RunAsync(
+            testDetails.TestRunId,
+            testDetails.TestRunDateTime,
+            jsonWriter,
+            settings.RxPackagesParsed,
+            settings.PackageSource);
 
         jsonWriter.WriteEndArray();
 
