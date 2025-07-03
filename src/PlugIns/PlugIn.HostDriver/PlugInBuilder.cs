@@ -11,41 +11,53 @@ public class PlugInBuilder : IDisposable
     private static readonly string PlugInTemplateProjectFolder = 
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../PlugIns/PlugIn"));
 
-    private readonly Dictionary<PlugInDescriptor, ModifiedProjectClone> _plugInProjects = new();
+    private readonly Dictionary<PlugInDescriptor, GeneratedProject> _plugInProjects = new();
 
     public async Task<string> GetPlugInDllPathAsync(PlugInDescriptor plugInDescriptor)
     {
-        if (!_plugInProjects.TryGetValue(plugInDescriptor, out ModifiedProjectClone? project))
+        if (!_plugInProjects.TryGetValue(plugInDescriptor, out GeneratedProject? project))
         {
             project = await CreateProjectForPlugIn(plugInDescriptor);
             _plugInProjects.Add(plugInDescriptor, project);
         }
 
-        return Path.Combine(project.ClonedProjectFolderPath, "bin", "Release", plugInDescriptor.TargetFrameworkMoniker, $"PlugIn.dll");
+        return Path.Combine(
+            project.Project.ClonedProjectFolderPath,
+            "bin",
+            "Release",
+            plugInDescriptor.TargetFrameworkMoniker,
+            $"{project.AssemblyName}.dll");
     }
 
-    private async Task<ModifiedProjectClone> CreateProjectForPlugIn(PlugInDescriptor plugInDescriptor)
+    private record GeneratedProject(ModifiedProjectClone Project, string AssemblyName);
+
+    private async Task<GeneratedProject> CreateProjectForPlugIn(PlugInDescriptor plugInDescriptor)
     {
+        // Give each distinct framework/rx version a different assembly name, because the
+        // .NET Fx plug-in host will only ever load the first assembly with any particular name.
+        string simplifiedRxVersion = plugInDescriptor.RxPackages[0].Version.Replace(".", "")[..2];
+        string assemblyName = $"PlugIn.{plugInDescriptor.TargetFrameworkMoniker}.Rx{simplifiedRxVersion}";
         var projectClone = ModifiedProjectClone.Create(
             PlugInTemplateProjectFolder,
             PlugInTempFolderName,
             (project) =>
             {
                 project.SetTargetFramework(plugInDescriptor.TargetFrameworkMoniker);
+                project.AddPropertyGroup([new("AssemblyName", assemblyName)]);
                 project.ReplacePackageReference("System.Reactive", plugInDescriptor.RxPackages);
                 project.FixUpProjectReferences(PlugInTemplateProjectFolder);
             },
             plugInDescriptor.PackageSource is string packageSource ? [("loc", packageSource)] : null);
 
         await projectClone.RunDotnetBuild("PlugIn.csproj");
-        return projectClone;
+        return new GeneratedProject(projectClone, assemblyName);
     }
 
     public void Dispose()
     {
-        foreach (ModifiedProjectClone projectClone in _plugInProjects.Values)
+        foreach (GeneratedProject projectClone in _plugInProjects.Values)
         {
-            projectClone.Dispose();
+            projectClone.Project.Dispose();
         }
     }
 }

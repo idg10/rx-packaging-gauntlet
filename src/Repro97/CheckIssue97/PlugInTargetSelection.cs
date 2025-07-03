@@ -145,7 +145,7 @@ internal class PlugInTargetSelection
                 : $"{hostRuntimeTfm}-windows10.0.22631";
 
             var hostFramework = NuGetFramework.Parse(effectiveHostTfm);
-            NuGetFramework? nearest = reducer.GetNearest(hostFramework, frameworks);
+            //NuGetFramework? nearest = reducer.GetNearest(hostFramework, frameworks);
 
             // This filters out Rx targets where none of the TFMs we could use in the plug-ins to select
             // that target are compatible with the host runtime.
@@ -169,31 +169,60 @@ internal class PlugInTargetSelection
                     g => g.Key,
                     g => g.Select(p => p.PluginTfm).OrderBy(x => x.Version).ToList());
 
-            Console.WriteLine(JsonSerializer.Serialize(plugInTfmsBySelectedRxTarget, JsonSerializerOptions.Default));
+            //Console.WriteLine(JsonSerializer.Serialize(plugInTfmsBySelectedRxTarget, JsonSerializerOptions.Default));
 
             List<string> selectedPlugInTfms = new();
-            foreach ((string key, List<NuGetFramework> plugInTfms) in plugInTfmsBySelectedRxTarget)
+
+            if (plugInTfmsBySelectedRxTarget.Count == 1)
             {
-                // We could just do this to let NuGet pick which it thinks is the best of the available TFMs for
-                // the host runtime:
-                // NuGetFramework? candidate = reducer.GetNearest(hostFramework, plugInTfms);
-                // However, that tends to pick the highest possible version. E.g., for Rx 6.0.1 in the net472 host,
-                // its pick for the netstandard2.0 NuGet target is a plug-in TFM of net471.
-                // Back when we did all this by hand, we chose net462 as the plug-in TFM that resolved to netstandard2.0.
-                // More generally, we prefer the oldest TFM that works. (This whole test scenario is essentially recreating
-                // legacy setups so the older TFMs usually better reflect the real-life scenarios these tests represent.)
-                NuGetFramework? candidate = plugInTfms
-                    .Select(plugInTfm => reducer.GetNearest(hostFramework, [plugInTfm]))
-                    .FirstOrDefault(framework => framework is not null);
-                if (candidate is not null)
+                // No matter which TFM we choose for the plug-in, it will always select the same Rx target. This
+                // happens with Rx 4.4 on .NET FX, for example. (And this is the reason that Rx 4.4 does not exhibit
+                // the plug-in issue 97 bug. It offers just one .NET FX target: net46. So when we build the plug-in for
+                // net46, or any later version of .NET FX, it will always select the net46 version of System.Reactive.
+                // And although Rx supplies a netstandard2.0 target, there is no .NET FX TFM we can build for that will
+                // cause that copy of Rx to be selected. .NET FX didn't offer netstandard2.0 support before net462, and
+                // the NuGet resolution rules deem net46 to be a better match than netstandard2.0 for all versions of
+                // .NET FX that support netstandard2.0.)
+                //
+                // The effect of this is that our normal logic below will decide that it doesn't need to run any test
+                // combinations at all, because normally we select exactly one plug-in TFM for each reachable Rx target.
+                // Since there's only one reachable Rx target in this case that means we would select just one plug-in TFM,
+                // meaning there are no available pairings. (We never pair a plug-in with itself.)
+                //
+                // However, it's useful to ensure we have at least one test run in cases like this because otherwise,
+                // versions that have this characteristic may become invisible when we load the results into analytics
+                // tooling. Using the absence of data to signify that a problem isn't possible can be tricky to deal
+                // with when it comes to visualizing the results. So in cases like this, we pick two TFMs, even
+                // though we know that they will correctly resolve to the same Rx target.
+                selectedPlugInTfms.AddRange(plugInTfmsBySelectedRxTarget.Values.Single()
+                    .Take(2)
+                    .Select(f => f.GetShortFolderName()));
+            }
+            else
+            {
+                foreach ((string key, List<NuGetFramework> plugInTfms) in plugInTfmsBySelectedRxTarget)
                 {
-                    selectedPlugInTfms.Add(candidate.GetShortFolderName());
-                }
-                else
-                {
-                    // If we cannot find a compatible TFM, then we cannot test this Rx target.
-                    Console.WriteLine($"No compatible plug-in TFM found for Rx target {key} with host runtime {hostRuntimeTfm}");
-                }
+                    // We could just do this to let NuGet pick which it thinks is the best of the available TFMs for
+                    // the host runtime:
+                    // NuGetFramework? candidate = reducer.GetNearest(hostFramework, plugInTfms);
+                    // However, that tends to pick the highest possible version. E.g., for Rx 6.0.1 in the net472 host,
+                    // its pick for the netstandard2.0 NuGet target is a plug-in TFM of net471.
+                    // Back when we did all this by hand, we chose net462 as the plug-in TFM that resolved to netstandard2.0.
+                    // More generally, we prefer the oldest TFM that works. (This whole test scenario is essentially recreating
+                    // legacy setups so the older TFMs usually better reflect the real-life scenarios these tests represent.)
+                    NuGetFramework? candidate = plugInTfms
+                        .Select(plugInTfm => reducer.GetNearest(hostFramework, [plugInTfm]))
+                        .FirstOrDefault(framework => framework is not null);
+                    if (candidate is not null)
+                    {
+                        selectedPlugInTfms.Add(candidate.GetShortFolderName());
+                    }
+                    else
+                    {
+                        // If we cannot find a compatible TFM, then we cannot test this Rx target.
+                        Console.WriteLine($"No compatible plug-in TFM found for Rx target {key} with host runtime {hostRuntimeTfm}");
+                    }
+                } 
             }
 
             results.AddRange(

@@ -71,7 +71,7 @@ internal class RunDeploymentBloatCheck
                 id: firstRxPackage.PackageId,
                 version: firstRxPackage.Version,
                 packageSource: packageSource.AsNullableJsonString());
-            var config = TestRunConfig.Create(
+            var config = TestRunConfigWithUiFrameworkSettings.Create(
                 baseNetTfm: scenario.BaseNetTfm,
                 emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
                 // TODO: shouldn't we be capturing all packages, not just the first?

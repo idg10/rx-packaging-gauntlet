@@ -94,6 +94,11 @@ public class PlugInHost : IDisposable
         Task processTask = process.WaitForExitAsync();
         Task firstToFinish = await Task.WhenAny(processTask, resultTask);
 
+        if (process.HasExited && process.ExitCode != 0)
+        {
+            Console.WriteLine($"{plugInHostExecutablePath} exited with code {process.ExitCode} for args {startInfo.Arguments}");
+        }
+
         if (!resultTask.IsCompleted)
         {
             // The process finished, but the result task is still running. It's possible that

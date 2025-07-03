@@ -22,7 +22,7 @@
     },
 
     "extensionMethodsWorkaroundTestRunConfig": {
-      "$ref": "./CommonSchema.json#/$defs/testRunConfig"
+      "$ref": "./CommonSchema.json#/$defs/testRunConfigWithUiFrameworkSettings"
     }
   }
 }

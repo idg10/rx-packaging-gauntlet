@@ -36,12 +36,12 @@ internal class RunGauntlet(
 
         ActionBlock<TestTypeAndPackageSelection> runTest = new(RunTestAsync);
 
-        expandTestTypes.LinkTo(expandPackageSelections);
-        expandPackageSelections.LinkTo(runTest);
+        expandTestTypes.LinkTo(expandPackageSelections, new() {  PropagateCompletion = true });
+        expandPackageSelections.LinkTo(runTest, new() { PropagateCompletion = true });
 
         expandTestTypes.Post(testTypes);
         expandTestTypes.Complete();
-        await runTest.Completion;
+        await runTest.Completion.ConfigureAwait(false);
 
         return 0;
     }
@@ -66,7 +66,10 @@ internal class RunGauntlet(
             : string.Empty;
         string testIdArgument = $" --test-id {testId}";
 
-        string outputPath = Path.Combine(outputFolder, testType.OutputName);
+        string outputBaseName = Path.GetFileNameWithoutExtension(testType.OutputName);
+        string outputExtension = Path.GetExtension(testType.OutputName);
+        string outputForThisPackageSelection = $"{outputBaseName}-{typeAndPackageSelection.PackageSelection.Packages[0].PackageId}-{typeAndPackageSelection.PackageSelection.Packages[0].Version}{outputExtension}";
+        string outputPath = Path.Combine(outputFolder, outputForThisPackageSelection);
         string outputArgument = $" --output {outputPath}";
         var startInfo = new ProcessStartInfo
         {
@@ -78,13 +81,15 @@ internal class RunGauntlet(
             WorkingDirectory = testRunnerExecutableFolder,
         };
 
+        Console.WriteLine($"{startInfo.FileName} {startInfo.Arguments}");
         try
         {
             using var process = new Process { StartInfo = startInfo };
             process.Start();
 
-            await process.WaitForExitAsync();
+            await process.WaitForExitAsync().ConfigureAwait(false);
 
+            Console.WriteLine();
         }
         catch (Exception x)
         {

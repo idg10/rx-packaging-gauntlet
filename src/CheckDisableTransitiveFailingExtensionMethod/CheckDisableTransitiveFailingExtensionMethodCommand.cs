@@ -75,6 +75,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
                     if (replaceSystemReactiveWith is not null)
                     {
                         project.ReplacePackageReference("System.Reactive", replaceSystemReactiveWith);
+                        (rxPackage, rxVersion) = (replaceSystemReactiveWith[0].PackageId, replaceSystemReactiveWith[0].Version);
                     }
 
                     project.AddUseUiFrameworksIfRequired(scenario.UseWpf, scenario.UseWindowsForms);
@@ -116,7 +117,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
                     id: rxPackage,
                     version: rxVersion,
                     packageSource: settings.PackageSource.AsNullableJsonString());
-                var config = TestRunConfig.Create(
+                var config = TestRunConfigWithUiFrameworkSettings.Create(
                     baseNetTfm: scenario.BaseNetTfm,
                     emitDisableTransitiveFrameworkReferences: scenario.EmitDisableTransitiveFrameworkReferences,
                     rxVersion: rxVersionPackage,

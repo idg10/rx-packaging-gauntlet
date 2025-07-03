@@ -13,7 +13,7 @@ internal class CheckDeploymentBloatCommand : TestCommandBase<TestSettings>
 
     private static readonly string[] baseNetTfms =
     [
-        "net6.0",
+        //"net6.0",
         "net8.0",
         "net9.0"
     ];

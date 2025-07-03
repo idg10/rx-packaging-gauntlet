@@ -131,29 +131,42 @@ internal class RunCheckPluginIssue97
             // Also, remove all the now-unneeded variations on the PlugIn project, since they are
             // all generated from the one template.
             // Can remove the Common folder too, because the source is now in place in that PlugIn project.
+            // Issue97TestRunConfig seems to have useWPF/windowsforms properties. Should it?
             var result = Issue97TestRun.Create(
-                TestRunConfig.Create(
-                    baseNetTfm: scenario.HostTfm,
-                    emitDisableTransitiveFrameworkReferences: false,
-                    rxVersion: NuGetPackage.Create("System.Reactive", "6.0.1")),
-                plugIn1: PlugInDescriptorToDetails(scenario.firstPlugIn),
-                plugIn2: PlugInDescriptorToDetails(scenario.secondPlugIn),
+                Issue97TestRunConfig.Create(
+                    hostTfm: scenario.HostTfm,
+                    plugIn1: PlugInDescriptorToDetails(scenario.firstPlugIn),
+                    plugIn2: PlugInDescriptorToDetails(scenario.secondPlugIn),
+                    rxVersion: NuGetPackage.Create(packages[0].PackageId, packages[0].Version)),
                 testRunDateTime: testRunDateTime,
-                testRunId: testRunId);
+                testRunId: testRunId,
+                plugIn1: HostPlugInResultToOutputFormat(output.FirstPlugIn),
+                plugIn2: HostPlugInResultToOutputFormat(output.SecondPlugIn));
 
             result.WriteTo(jsonWriter);
         }
     }
 
-    private static PlugInDetails PlugInDescriptorToDetails(PlugInDescriptor descriptor)
+    private static PlugInConfig PlugInDescriptorToDetails(PlugInDescriptor descriptor)
     {
         NuGetPackage Package(PackageIdAndVersion p) =>
             NuGetPackage.Create(p.PackageId, p.Version, descriptor.PackageSource.AsNullableJsonString());
 
-        return PlugInDetails.Create(
+        return PlugInConfig.Create(
             tfm: descriptor.TargetFrameworkMoniker,
             rxVersion: RxVersion.Create(
-                package: Package(descriptor.RxPackages[0]),
+                mainRxPackage: Package(descriptor.RxPackages[0]),
                 allPackages: RxVersion.AllPackagesArray.Create(descriptor.RxPackages.Select(Package).ToArray())));
+    }
+
+    private static PlugInResult HostPlugInResultToOutputFormat(HostOutput.PlugInResult result)
+    {
+        return PlugInResult.Create(
+            rxFullAssemblyName: result.RxFullAssemblyName,
+            rxLocation: result.RxLocation,
+            rxTargetFramework: result.RxTargetFramework,
+            plugInLocation: result.PlugInLocation,
+            flowsCancellationTokenToOperationCancelledException: result.FlowsCancellationTokenToOperationCancelledException,
+            supportsWindowsForms: result.SupportsWindowsForms);
     }
 }
