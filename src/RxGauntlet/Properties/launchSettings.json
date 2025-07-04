@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "RxGauntlet --all-published-rx": {
+      "commandName": "Project",
+      "commandLineArgs": "--all-published-rx"
+    },
+    "System.Reactive.Net preview": {
+      "commandName": "Project",
+      "commandLineArgs": "--package-source https://pkgs.dev.azure.com/dotnet/Rx.NET/_packaging/RxNet/nuget/v3/index.json\r\n--rx-package System.Reactive.Net,7.0.0-preview.17.g58342773bd"
+    }
+  }
+}

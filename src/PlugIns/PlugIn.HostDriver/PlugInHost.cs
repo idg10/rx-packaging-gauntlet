@@ -2,7 +2,11 @@
 
 namespace PlugIn.HostDriver;
 
-public static class PlugInHost
+/// <summary>
+/// Provides functionality to launch plug-in host processes, load plug-ins into that host, and obtain the host's
+/// standard output.
+/// </summary>
+public sealed class PlugInHost : IDisposable
 {
 #if DEBUG
     const string Configuration = "Debug";
@@ -10,7 +14,50 @@ public static class PlugInHost
         const string Configuration = "Release";
 #endif
 
-    public async static Task<TResult> Run<TResult>(
+    private PlugInBuilder _plugInBuilder = new();
+
+    /// <summary>
+    /// Removes the temporary plug-in projects created by calls to
+    /// <see cref="Run{TResult}(string, PlugInDescriptor, PlugInDescriptor, Func{Stream, Task{TResult}})"/>.
+    /// </summary>
+    public void Dispose()
+    {
+        _plugInBuilder.Dispose();
+    }
+
+    /// <summary>
+    /// Launches a plug-in host process built for the specified target framework, loads two plug-ins into that host,
+    /// and makes the host's standard output available to the caller.
+    /// </summary>
+    /// <typeparam name="TResult">
+    /// The result type. The <paramref name="stdOutStreamToResult"/> argument is supplied with the host's standard
+    /// output, and returns a value of this type, which then becomes the result of this method.
+    /// </typeparam>
+    /// <param name="hostRuntimeTfm">
+    /// <para>
+    /// The target framework moniker (TFM) of the host runtime. For example, "net8.0" or "net48".
+    /// </para>
+    /// <para>
+    /// This must match one of the target frameworks for which either the <c>PlugIn.HostDotnet</c> or the
+    /// <c>PlugIn.HostNetFx</c> is built.
+    /// </para>
+    /// <para>
+    /// Note that this does not necessarily define the runtime that the host uses. For .NET Framework TFMs, there is
+    /// only one instance of .NET Framework 4.x installed, so that's the version the host will use. (That said, the
+    /// specified TFM can cause the runtime to enable certain backwards-compatibility features.) With .NET TFMs, you
+    /// will get the runtime you asked for if it is installed. However, if running on a system that only has newer
+    /// versions of .NET installed than you asked for, you will get one of those instead.
+    /// </para>
+    /// </param>
+    /// <param name="firstPlugIn"></param>
+    /// <param name="secondPlugIn"></param>
+    /// <param name="stdOutStreamToResult"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentException"></exception>
+    /// <exception cref="DirectoryNotFoundException"></exception>
+    /// <exception cref="FileNotFoundException"></exception>
+    /// <exception cref="InvalidOperationException"></exception>
+    public async Task<TResult> Run<TResult>(
         string hostRuntimeTfm,
         PlugInDescriptor firstPlugIn,
         PlugInDescriptor secondPlugIn,
@@ -66,13 +113,16 @@ public static class PlugInHost
             throw new FileNotFoundException($"PlugIn host executable not found at {plugInHostExecutablePath}");
         }
 
+        string firstPlugInPath = await _plugInBuilder.GetPlugInDllPathAsync(firstPlugIn);
+        string secondPlugInPath = await _plugInBuilder.GetPlugInDllPathAsync(secondPlugIn);
+
         var startInfo = new ProcessStartInfo
         {
             FileName = plugInHostExecutablePath,
             RedirectStandardOutput = true,
             UseShellExecute = false,
-            CreateNoWindow = true,
-            Arguments = $"{firstPlugIn.RxVersion} {firstPlugIn.TargetFrameworkMoniker} {secondPlugIn.RxVersion} {secondPlugIn.TargetFrameworkMoniker}",
+            //CreateNoWindow = true,
+            Arguments = $"{firstPlugInPath} {secondPlugInPath}",
             WorkingDirectory = plugInHostExecutableFolder,
         };
 
@@ -83,6 +133,11 @@ public static class PlugInHost
         Task<TResult> resultTask = stdOutStreamToResult(process.StandardOutput.BaseStream);
         Task processTask = process.WaitForExitAsync();
         Task firstToFinish = await Task.WhenAny(processTask, resultTask);
+
+        if (process.HasExited && process.ExitCode != 0)
+        {
+            Console.WriteLine($"{plugInHostExecutablePath} exited with code {process.ExitCode} for args {startInfo.Arguments}");
+        }
 
         if (!resultTask.IsCompleted)
         {
@@ -98,12 +153,5 @@ public static class PlugInHost
         var result = await resultTask;
 
         return result;
-    }
-
-    private static string GetPlugInArgument(PlugInDescriptor descriptor)
-    {
-        bool isNetFx = descriptor.TargetFrameworkMoniker.StartsWith("net") && !descriptor.TargetFrameworkMoniker.Contains('.');
-        string frameworkNamePart = isNetFx ? "NetFx" : "Dotnet";
-        return $"PlugIn.{frameworkNamePart}.{descriptor.TargetFrameworkMoniker}.{descriptor.RxVersion}";
     }
 }

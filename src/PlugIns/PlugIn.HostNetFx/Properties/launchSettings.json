@@ -2,7 +2,7 @@
   "profiles": {
     "Rx3.0 net45 net46": {
       "commandName": "Project",
-      "commandLineArgs": "Rx30 net45 Rx30 net46"
+      "commandLineArgs": "C:\\Users\\ian\\AppData\\Local\\Temp\\RxGauntlet\\PlugInHost\\20250703-131339\\bin\\Release\\net45\\PlugIn.dll C:\\Users\\ian\\AppData\\Local\\Temp\\RxGauntlet\\PlugInHost\\20250703-131344\\bin\\Release\\net46\\PlugIn.dll"
     },
     "Rx3.0 net46 net45": {
       "commandName": "Project",

@@ -10,6 +10,10 @@
     "System.Reactive preview": {
       "commandName": "Project",
       "commandLineArgs": "--package-source https://pkgs.dev.azure.com/dotnet/Rx.NET/_packaging/RxNet/nuget/v3/index.json\r\n--rx-package System.Reactive,7.0.0-preview.17.g58342773bd"
+    },
+    "As orchestrated": {
+      "commandName": "Project",
+      "commandLineArgs": "--rx-package System.Reactive.Linq,3.0.0 --test-id 2025-07-03_14-41-06-797384B2 --output C:\\dev\\idg10\\rx-packaging-gauntlet\\src\\RxGauntlet\\bin\\Debug\\net9.0\\2025-07-03_14-41-06\\CheckDisableTransitiveFailingExtensionMethod-System.Reactive.Linq-3.0.0..json"
     }
   }
 }

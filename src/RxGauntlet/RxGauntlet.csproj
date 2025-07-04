@@ -8,11 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NuGet.Protocol" Version="6.14.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\PlugIns\PlugIn.HostDriver\PlugIn.HostDriver.csproj" />
+    <ProjectReference Include="..\RxGauntlet.Common\RxGauntlet.Common.csproj" />
   </ItemGroup>
 
 </Project>

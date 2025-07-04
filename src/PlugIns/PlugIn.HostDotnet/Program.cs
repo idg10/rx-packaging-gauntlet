@@ -3,17 +3,15 @@ using PlugIn.HostSerialization;
 
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Text.RegularExpressions;
 
-if (args is not [string firstPlugInRxVersion, string firstPlugInTfm, string secondPlugInRxVersion, string secondPlugInTfm])
+if (args is not [string firstPlugInPath, string secondPlugInPath])
 {
-    Console.Error.WriteLine("Usage: PlugIn.HostDotnet firstPlugInRxVersion firstPlugInTfm secondPlugInRxVersion secondPlugInTfm");
-    Console.Error.WriteLine("E.g.: PlugIn.HostDotnet Rx44 net462 Rx44 net472");
+    Console.Error.WriteLine("Usage: PlugIn.HostDotnet <firstPlugInDllPath> <secondPlugInDllPath>");
     return 1;
 }
 
-HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugInRxVersion, firstPlugInTfm);
-HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugInRxVersion, secondPlugInTfm);
+HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugInPath);
+HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugInPath);
 if (result1 is null || result2 is null)
 {
     return 1;
@@ -28,16 +26,8 @@ Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(result));
 
 return 0;
 
-static HostOutput.PlugInResult? ExecutePlugIn(string rxVersion, string tfm)
+static HostOutput.PlugInResult? ExecutePlugIn(string plugInDllPath)
 {
-#if DEBUG
-    const string Configuration = "Debug";
-#else
-        const string Configuration = "Release";
-#endif
-
-    string plugInName = $"PlugIn.Dotnet.{rxVersion}";
-    string plugInDllPath = Path.GetFullPath($@"..\..\..\..\{plugInName}\bin\{Configuration}\{tfm}\{plugInName}.dll");
     PlugInLoadContext plugInLoadContext = new(plugInDllPath);
     Assembly plugin = plugInLoadContext.LoadFromAssemblyPath(plugInDllPath);
 

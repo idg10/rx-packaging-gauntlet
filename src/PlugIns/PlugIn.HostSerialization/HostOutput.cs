@@ -1,5 +1,13 @@
 ﻿namespace PlugIn.HostSerialization;
 
+/// <summary>
+/// The output of the plug-in host process.
+/// </summary>
+/// <remarks>
+/// <para>
+/// The plug-in hosts produce JSON output based on this type, which is then deserialized by the plug-in host driver.
+/// </para>
+/// </remarks>
 public class HostOutput
 {
     public PlugInResult FirstPlugIn { get; set; }
