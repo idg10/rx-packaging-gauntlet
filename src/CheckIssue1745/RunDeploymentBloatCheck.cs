@@ -4,9 +4,6 @@ using NodaTime;
 
 using RxGauntlet.Build;
 using RxGauntlet.LogModel;
-using RxGauntlet.Xml;
-
-using System.Xml;
 
 namespace CheckIssue1745;
 
@@ -108,9 +105,6 @@ internal class RunDeploymentBloatCheck
 
         if (emitDisableTransitiveFrameworkReferences)
         {
-            // <PropertyGroup>
-            //   <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
-            // </PropertyGroup>
             project.AddPropertyGroup([new("DisableTransitiveFrameworkReferences", "True")]);
         }
     }

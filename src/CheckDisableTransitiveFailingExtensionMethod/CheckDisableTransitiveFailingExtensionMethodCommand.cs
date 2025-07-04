@@ -2,17 +2,14 @@
 
 using Corvus.Json;
 
-using RxGauntlet;
 using RxGauntlet.Build;
 using RxGauntlet.CommandLine;
 using RxGauntlet.LogModel;
-using RxGauntlet.Xml;
 
 using Spectre.Console.Cli;
 
 using System.Diagnostics;
 using System.Text.Json;
-using System.Xml;
 
 namespace CheckDisableTransitiveFailingExtensionMethod;
 
@@ -82,9 +79,6 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
 
                     if (scenario.EmitDisableTransitiveFrameworkReferences)
                     {
-                        // <PropertyGroup>
-                        //   <DisableTransitiveFrameworkReferences>true</DisableTransitiveFrameworkReferences>
-                        // </PropertyGroup>
                         project.AddPropertyGroup([new("DisableTransitiveFrameworkReferences", "True")]);
                     }
                 },

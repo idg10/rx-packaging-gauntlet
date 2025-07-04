@@ -3,7 +3,6 @@ using PlugIn.HostSerialization;
 
 using System;
 using System.Reflection;
-using System.Text.RegularExpressions;
 
 namespace PlugInHostNetFx481
 {

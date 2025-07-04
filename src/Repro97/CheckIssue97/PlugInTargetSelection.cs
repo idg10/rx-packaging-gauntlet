@@ -9,8 +9,6 @@ using PlugIn.HostDriver;
 
 using RxGauntlet.Build;
 
-using System.Text.Json;
-
 namespace CheckIssue97;
 
 internal class PlugInTargetSelection
@@ -102,7 +100,6 @@ internal class PlugInTargetSelection
 
         packageStream.Position = 0;
         using var reader = new PackageArchiveReader(packageStream);
-        var files = reader.GetFiles().ToList();
 
         // Some packages (e.g. System.Reactive.Linq 3.0.0) report file entries for what should be folders.
         // For example, we get lib/netstandard1.0/, which is a zero-length file. I think something went
@@ -145,7 +142,6 @@ internal class PlugInTargetSelection
                 : $"{hostRuntimeTfm}-windows10.0.22631";
 
             var hostFramework = NuGetFramework.Parse(effectiveHostTfm);
-            //NuGetFramework? nearest = reducer.GetNearest(hostFramework, frameworks);
 
             // This filters out Rx targets where none of the TFMs we could use in the plug-ins to select
             // that target are compatible with the host runtime.
@@ -169,10 +165,7 @@ internal class PlugInTargetSelection
                     g => g.Key,
                     g => g.Select(p => p.PluginTfm).OrderBy(x => x.Version).ToList());
 
-            //Console.WriteLine(JsonSerializer.Serialize(plugInTfmsBySelectedRxTarget, JsonSerializerOptions.Default));
-
-            List<string> selectedPlugInTfms = new();
-
+            List<string> selectedPlugInTfms = [];
             if (plugInTfmsBySelectedRxTarget.Count == 1)
             {
                 // No matter which TFM we choose for the plug-in, it will always select the same Rx target. This

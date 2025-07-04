@@ -8,8 +8,6 @@ namespace CheckIssue97;
 
 internal class CheckPluginIssue97Command : TestCommandBase<TestSettings>
 {
-    private static readonly string[] netFxHostRuntimes = ["net462", "net472", "net481"];
-
     protected override string DefaultOutputFilename => "CheckPluginIssue97.json";
 
     protected override async Task<int> ExecuteTestAsync(
