@@ -82,7 +82,7 @@ namespace PlugInTest
             // Rx 3.0 days.
             // So although Rx 5.0 effectively reintroduced the problem that Rx 3.0 had fixed, it
             // was less of a problem than it had been before.
-            Type cs = asm.GetType("System.Reactive.Concurrency.ControlScheduler");
+            Type cs = asm.GetType("System.Reactive.Concurrency.ControlScheduler")!;
             return cs != null;
         }
     }
