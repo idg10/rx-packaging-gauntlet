@@ -44,6 +44,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlugIn", "PlugIns\PlugIn\Pl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckTransitiveFrameworkReference", "CheckTransitiveFrameworkReference\CheckTransitiveFrameworkReference.csproj", "{81310AF4-AED2-4507-BBC0-B989F482EB7B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TransitiveReferences", "TransitiveReferences", "{6D80614D-D71D-4ED7-A5B9-66CFC38CE084}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transitive.Lib.UsesRx", "TransitiveReferences\Transitive.Lib.UsesRx\Transitive.Lib.UsesRx.csproj", "{BF911E24-EAC7-2F38-3842-71905EA1292E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -106,6 +110,10 @@ Global
 		{81310AF4-AED2-4507-BBC0-B989F482EB7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{81310AF4-AED2-4507-BBC0-B989F482EB7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{81310AF4-AED2-4507-BBC0-B989F482EB7B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF911E24-EAC7-2F38-3842-71905EA1292E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF911E24-EAC7-2F38-3842-71905EA1292E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF911E24-EAC7-2F38-3842-71905EA1292E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF911E24-EAC7-2F38-3842-71905EA1292E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -123,6 +131,7 @@ Global
 		{9C19F572-AB45-49B1-9E35-7C26C24EE2F1} = {E19B846E-40A7-489F-8E6E-65A5CF7B73DF}
 		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A} = {205D859B-0181-4166-ADA4-CFD1EBE6642E}
 		{81310AF4-AED2-4507-BBC0-B989F482EB7B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{BF911E24-EAC7-2F38-3842-71905EA1292E} = {6D80614D-D71D-4ED7-A5B9-66CFC38CE084}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43285174-101F-4093-8151-21B8DC3555EB}
