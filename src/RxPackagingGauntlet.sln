@@ -42,6 +42,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxGauntlet", "RxGauntlet\Rx
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlugIn", "PlugIns\PlugIn\PlugIn.csproj", "{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckTransitiveFrameworkReference", "CheckTransitiveFrameworkReference\CheckTransitiveFrameworkReference.csproj", "{81310AF4-AED2-4507-BBC0-B989F482EB7B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -100,6 +102,10 @@ Global
 		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81310AF4-AED2-4507-BBC0-B989F482EB7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81310AF4-AED2-4507-BBC0-B989F482EB7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81310AF4-AED2-4507-BBC0-B989F482EB7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81310AF4-AED2-4507-BBC0-B989F482EB7B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -116,6 +122,7 @@ Global
 		{6C7F5D97-E217-45E5-82A9-583831798A26} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{9C19F572-AB45-49B1-9E35-7C26C24EE2F1} = {E19B846E-40A7-489F-8E6E-65A5CF7B73DF}
 		{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A} = {205D859B-0181-4166-ADA4-CFD1EBE6642E}
+		{81310AF4-AED2-4507-BBC0-B989F482EB7B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43285174-101F-4093-8151-21B8DC3555EB}
