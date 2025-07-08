@@ -81,6 +81,26 @@
         "id",
         "version"
       ]
+    },
+
+    "bloatTestResults": {
+      "properties": {
+        "deployedWpf": { "type": "boolean" },
+        "deployedWindowsForms": { "type": "boolean" }
+      },
+      "required": [
+        "deployedWpf",
+        "deployedWindowsForms"
+      ]
+    },
+
+    "buildResults": {
+      "properties": {
+        "buildSucceeded": { "type": "boolean" }
+      },
+      "required": [
+        "buildSucceeded"
+      ]
     }
   }
 }

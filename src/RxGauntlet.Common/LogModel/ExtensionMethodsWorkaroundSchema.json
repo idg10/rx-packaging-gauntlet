@@ -5,19 +5,18 @@
 
   "$defs": {
     "extensionMethodsWorkaroundTestRun": {
-      "$ref": "./CommonSchema.json#/$defs/testRun",
+      "allOf": [
+        { "$ref": "./CommonSchema.json#/$defs/testRun" },
+        { "$ref": "./CommonSchema.json#/$defs/buildResults" },
+        { "$ref": "./CommonSchema.json#/$defs/bloatTestResults" }
+      ],
       "properties": {
         "config": {
           "$ref": "#/$defs/extensionMethodsWorkaroundTestRunConfig"
-        },
-        "buildSucceeded": "boolean",
-
-        "$comment":  "Do we need these in this test?",
-        "deployedWpf": { "type": "boolean" },
-        "deployedWindowsForms": { "type": "boolean" }
+        }
       },
       "required": [
-        "buildSucceeded"
+        "config"
       ]
     },
 

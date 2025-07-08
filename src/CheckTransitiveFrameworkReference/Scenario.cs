@@ -24,10 +24,18 @@ internal enum RxAcquiredVia
 /// </param>
 /// <param name="AppHasCodeUsingNonUiFrameworkSpecificRxDirectly"></param>
 internal record Scenario(
+    string ApplicationTfm,
+    string TfmOfBeforeAndAfterLibrary,
     RxAcquiredVia RxBefore,
     RxAcquiredVia RxUpgrade,
     RxAcquiredVia RxBeforeAndAfter,
-    bool BeforeAndAfterLibraryIsOldVersion,
+    LibraryDetails? BeforeLibrary,
+    LibraryDetails? BeforeAndAfterLibrary,
+    LibraryDetails? AfterLibrary,
     bool AppHasCodeUsingNonUiFrameworkSpecificRxDirectly,
-    bool BeforeLibraryHasWindowsTargetUsingUiFrameworkSpecificRxFeature,
-    bool AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature);
+    bool AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature); // TODO: do we need before/after/both flavours of this?
+
+internal record LibraryDetails(
+    string Tfms,
+    bool ReferencesOldRxVersion,
+    bool HasWindowsTargetUsingUiFrameworkSpecificRxFeature);

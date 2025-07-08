@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Rx Gauntlet Logging Schema - Transitive Framework References",
+  "$id": "http://endjin.com/schemas/rx-gauntlet/transitiveframeworkcheck",
+  "$defs": {
+    "transitiveFrameworkReferenceTestRun": {
+      "$ref": "./CommonSchema.json#/$defs/testRun",
+      "$comment": {
+        "allOf": [
+          { "$ref": "./CommonSchema.json#/$defs/testRun" },
+          { "$ref": "./CommonSchema.json#/$defs/bloatTestResults" }
+        ]
+      },
+      "properties": {
+        "config": { "$ref": "#/$defs/transitiveFrameworkReferenceTestRunConfig" },
+
+        "$comment": "We might need multiple before/after pairs for different tests",
+        "beforeRxUpgrade": {
+          "description": "The results pre-upgrade.",
+          "$ref": "#/$defs/transitiveFrameworkReferenceTestPartResult"
+        },
+        "afterRxUpgrade": {
+          "description": "The results after upgrading to the version of Rx.NET under test.",
+          "$ref": "#/$defs/transitiveFrameworkReferenceTestPartResult"
+        }
+      },
+      "required": [
+        "config",
+        "beforeRxUpgrade",
+        "afterRxUpgrade"
+      ]
+    },
+
+    "transitiveFrameworkReferenceTestPartResult": {
+      "description": "The bloat results pre-upgrade.",
+      "allOf": [
+        { "$ref": "./CommonSchema.json#/$defs/buildResults" },
+        { "$ref": "./CommonSchema.json#/$defs/bloatTestResults" }
+      ]
+    },
+
+    "transitiveFrameworkReferenceTestRunConfig": {
+      "$ref": "./CommonSchema.json#/$defs/testRunConfig",
+      "properties": {
+        "appTfm": {
+          "description": "The TFM of the application.",
+          "type": "string"
+        },
+        "oldRxVersion": {
+          "description": "The old version of Rx. In normal tests, this will be a version known to cause bloat.",
+          "$ref": "./CommonSchema.json#/$defs/rxVersion"
+        },
+        "newRxVersion": {
+          "description": "The new or candidate version of Rx being tested.",
+          "$ref": "./CommonSchema.json#/$defs/rxVersion"
+        }
+      },
+      "required": [
+        "appTfm",
+        "oldRxVersion",
+        "newRxVersion"
+      ]
+    },
+
+    "plugInConfig": {
+      "type": "object",
+      "properties": {
+        "tfm": {
+          "description": "The TFM for which the plug-in was built.",
+          "type": "string"
+        },
+        "rxVersion": {
+          "description": "The version of Rx that the plug-in was built against.",
+          "$ref": "./CommonSchema.json#/$defs/rxVersion"
+        }
+      },
+      "required": [ "tfm", "rxVersion" ]
+    },
+
+    "plugInResult": {
+      "type": "object",
+      "properties": {
+        "rxFullAssemblyName": {
+          "description": "The full name of the Rx assembly used by the plug-in.",
+          "type": "string"
+        },
+        "rxLocation": {
+          "description": "The filesystem location of the Rx assembly used by the plug-in.",
+          "type": "string"
+        },
+        "rxTargetFramework": {
+          "description": "The target framework of the Rx assembly used by the plug-in (as described by its TargetFrameworkAttribute).",
+          "type": "string"
+        },
+        "plugInlocation": {
+          "description": "The filesystem location of the plug-in assembly.",
+          "type": "string"
+        },
+        "flowsCancellationTokenToOperationCancelledException": {
+          "description": "Indicates whether the plug-in found that Rx's Foreach correctly flows the CancellationToken to OperationCanceledException.",
+          "type": "boolean"
+        },
+        "supportsWindowsForms": {
+          "description": "Indicates whether the plug-in supports Windows Forms.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rxFullAssemblyName",
+        "rxLocation",
+        "rxTargetFramework",
+        "plugInLocation",
+        "flowsCancellationTokenToOperationCancelledException",
+        "supportsWindowsForms"
+      ]
+    }
+  }
+}
