@@ -20,11 +20,8 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
     protected override async Task<int> ExecuteTestAsync(
         TestDetails testDetails, CommandContext context, TestSettings settings, Utf8JsonWriter jsonWriter)
     {
-        PackageIdAndVersion[]? replaceSystemReactiveWith = settings.RxPackagesParsed;
-        if (replaceSystemReactiveWith is [])
-        {
-            replaceSystemReactiveWith = null;
-        }
+        // TODO: check that using only the main package is the right thing to do here.
+        PackageIdAndVersion[] replaceSystemReactiveWith = [settings.RxMainPackageParsed];
 
         string templateProjectFolder =
             Path.Combine(AppContext.BaseDirectory, "../../../../ExtensionMethods/ExtensionMethods.DisableTransitiveWorkaroundFail/");

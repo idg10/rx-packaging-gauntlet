@@ -10,103 +10,141 @@ namespace RxGauntlet.CommandLine;
 
 public class RxSourceSettings : CommandSettings
 {
-    private PackageIdAndVersion[]? _parsedRxPackages;
+    private PackageIdAndVersion? _parsedRxMainPackage;
+    private PackageIdAndVersion? _parsedRxLegacyPackage;
+    private PackageIdAndVersion[]? _parsedRxUiFrameworkPackages;
 
     [Description("The URL of an additional NuGet package source, or the file path of a local package store. (The public NuGet feed will remain available.)")]
     [CommandOption("--package-source")]
     public string? PackageSource { get; init; }
 
-    [Description("Package (as PackageId,Version, e.g. System.Reactive.Net,7.0.0-preview.17.g58342773bd) to replace existing System.Reactive PackageReference")]
-    [CommandOption("--rx-package")]
-    public string[] RxPackages { get; init; } = [];
+    [Description("Package (as PackageId,Version, e.g. System.Reactive.Net,7.0.0-preview.17.g58342773bd) to use as the main Rx package (replacing the existing System.Reactive PackageReference where appropriate)")]
+    [CommandOption("--rx-main-package")]
+    public required string RxMainPackage { get; init; }
 
-    public PackageIdAndVersion[] RxPackagesParsed
+    [Description("Package (as PackageId,Version, e.g. System.Reactive,7.0.0-preview.17.g58342773bd) to use as a compatibility facade replacing the legacy System.Reactive (typically used only when a dependency is using an old System.Reactive, and the app wants to use a newer one). In cases where System.Reactive remains as the main package, this will not be set.")]
+    [CommandOption("--rx-legacy-package")]
+    public string? RxLegacyPackage { get; init; }
+
+    [Description("Package (as PackageId,Version, e.g. System.Reactive.For.Wpf,7.0.0-preview.17.g58342773bd) to reference when UI-framework-specific Rx functionatliy is required")]
+    [CommandOption("--rx-ui-package")]
+    public string[] RxUiFrameworkPackages { get; init; } = [];
+
+    public PackageIdAndVersion RxMainPackageParsed => GetParsedPackage(ref _parsedRxMainPackage);
+    public PackageIdAndVersion? RxLegacyPackageParsed => this.RxLegacyPackage is null
+        ? null
+        : GetParsedPackage(ref _parsedRxMainPackage);
+
+    public PackageIdAndVersion[] RxUiFrameworkPackagesParsed
     {
         get
         {
-            if (_parsedRxPackages is not null)
+            if (_parsedRxUiFrameworkPackages is not null)
             {
-                return _parsedRxPackages;
+                return _parsedRxUiFrameworkPackages;
             }
 
-            if (RxPackages.Length == 0)
+            if (RxUiFrameworkPackages.Length == 0)
             {
-                _parsedRxPackages = [];
+                _parsedRxUiFrameworkPackages = [];
             }
             else
             {
-                ValidationResult rxPackagesValidationResult = ValidateRxPackages(packageRequired: false);
+                ValidationResult rxPackagesValidationResult = Validate();
                 if (!rxPackagesValidationResult.Successful)
                 {
-                    throw new InvalidOperationException($"{nameof(RxPackages)} is invalid: {rxPackagesValidationResult.Message}");
+                    throw new InvalidOperationException($"Settings are invalid: {rxPackagesValidationResult.Message}");
                 }
 
-                Debug.Assert(_parsedRxPackages is not null, "RxPackagesParsed should have been set by ValidateRxPackages.");
+                Debug.Assert(_parsedRxUiFrameworkPackages is not null, "RxPackagesParsed should have been set by ValidateRxPackages.");
             }
 
-            return _parsedRxPackages;
+            return _parsedRxUiFrameworkPackages;
         }
     }
+
+    /// <summary>
+    /// Gets all of the Rx packages, starting with the one in <see cref="RxMainPackageParsed"/>, and then,
+    /// if present, <see cref="RxLegacyPackageParsed"/>, followed by <see cref="RxUiFrameworkPackagesParsed"/>.
+    /// </summary>
+    /// <returns></returns>
+    public PackageIdAndVersion[] GetAllParsedPackages() =>
+        [
+            this.RxMainPackageParsed,
+
+            ..this.RxLegacyPackageParsed is PackageIdAndVersion legacy
+                ? [legacy] : Array.Empty<PackageIdAndVersion>(),
+
+            ..this.RxUiFrameworkPackagesParsed
+        ];
 
     /// <summary>
     /// Validates the command line argument(s).
     /// </summary>
-    /// <returns>A validation result.</returns>
-    /// <remarks>
-    /// This just calls <see cref="ValidateRxPackages(bool)"/> with <c>packageRequired</c> set to <c>true</c>.
-    /// Derived classes can override this method if they do want to make the <c>--rx-package</c> argument optional.
-    /// Individual repro projects typically won't do this, but the RxGauntlet tool does.
-    /// </remarks>
+    /// <returns>A value indicating whether the settings are valid.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if this object's properties are set in a way that we do not expect from Spectre Console CLI.
+    /// </exception>
     public override ValidationResult Validate()
     {
-        return ValidateRxPackages(packageRequired: true);
-    }
+        // Spectre Console will never make the following properties null, so this can only mean that we're being used
+        // in an unsupported way (probably not via Spectre.Console) so we throw instead of reporting a validation
+        // failure.
 
-    /// <summary>
-    /// Validates the <c>--rx-package</c> argument(s).
-    /// </summary>
-    /// <param name="packageRequired">
-    /// True if at least one package must be specified. (Individual repro projects typically do this.)
-    /// False if the tool allows no packages to be specified. (The RxGauntlet tool allows this because it
-    /// offers a mode where it runs for all published Rx packages, which is mutually exclusive with the
-    /// <c>--rx-package</c> argument.)
-    /// </param>
-    /// <returns></returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    public ValidationResult ValidateRxPackages(bool packageRequired)
-    {
-        if (this.RxPackages is not string[] rxPackages)
+        if (this.RxMainPackage is not string rxMainPackage)
         {
-            // Spectre Console will never make this null, so this can only mean that we're being used in an
-            // unsupported way (probably not via Spectre.Console) so we throw instead of reporting a validation
-            // failure.
-            throw new InvalidOperationException("RxPackages must not be null.");
+            throw new InvalidOperationException($"{nameof(RxMainPackage)} must not be null.");
         }
 
-        if (this.RxPackages.Length == 0)
+        if (this.RxUiFrameworkPackages is not string[] rxUiPackages)
         {
-            _parsedRxPackages = [];
-            return packageRequired
-                ? ValidationResult.Error("At least one --rx-package must be specified.")
-                : ValidationResult.Success();
+            throw new InvalidOperationException($"{nameof(RxUiFrameworkPackages)}  must not be null.");
         }
 
-        HashSet<string> packageIdsSeen = new(capacity: rxPackages.Length);
-        var result = new PackageIdAndVersion[rxPackages.Length];
-        for (int i = 0; i < rxPackages.Length; i++)
+        if (!PackageIdAndVersion.TryParse(this.RxMainPackage, out _parsedRxMainPackage))
         {
-            if (!PackageIdAndVersion.TryParse(rxPackages[i], out PackageIdAndVersion? packageIdAndVersion))
+            return ValidationResult.Error($"Invalid package specification: {this.RxMainPackage}. Must be <PackageId>,<Version>");
+        }
+
+        if (this.RxLegacyPackage is string rxLegacyPackage &&
+            !PackageIdAndVersion.TryParse(rxLegacyPackage, out _parsedRxLegacyPackage))
+        {
+            return ValidationResult.Error($"Invalid package specification: {rxLegacyPackage}. Must be <PackageId>,<Version>");
+        }
+
+        HashSet<string> uiPackageIdsSeen = new(capacity: rxUiPackages.Length);
+        var uiPackageIdsAndVersions = new PackageIdAndVersion[rxUiPackages.Length];
+        for (int i = 0; i < rxUiPackages.Length; i++)
+        {
+            if (!PackageIdAndVersion.TryParse(rxUiPackages[i], out PackageIdAndVersion? packageIdAndVersion))
             {
-                return ValidationResult.Error($"Invalid package specification: {rxPackages[i]}. Must be <PackageId>,<Version>");
+                return ValidationResult.Error($"Invalid package specification: {rxUiPackages[i]}. Must be <PackageId>,<Version>");
             }
-            if (!packageIdsSeen.Add(packageIdAndVersion.PackageId))
+            if (!uiPackageIdsSeen.Add(packageIdAndVersion.PackageId))
             {
                 return ValidationResult.Error($"Duplicate package id: {packageIdAndVersion.PackageId}.");
             }
-            result[i] = packageIdAndVersion;
+            uiPackageIdsAndVersions[i] = packageIdAndVersion;
         }
 
-        _parsedRxPackages = result;
+        _parsedRxUiFrameworkPackages = uiPackageIdsAndVersions;
         return ValidationResult.Success();
+    }
+
+    private PackageIdAndVersion GetParsedPackage(ref PackageIdAndVersion? field)
+    {
+        if (field is null)
+        {
+            ValidationResult rxPackagesValidationResult = Validate();
+
+            if (field is null && !rxPackagesValidationResult.Successful)
+            {
+                throw new InvalidOperationException($"Settings are invalid: {rxPackagesValidationResult.Message}");
+            }
+
+            Debug.Assert(field is not null);
+        }
+
+        return field;
     }
 }

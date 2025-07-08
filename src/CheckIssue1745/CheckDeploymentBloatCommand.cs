@@ -39,7 +39,7 @@ internal class CheckDeploymentBloatCommand : TestCommandBase<TestSettings>
             from useWpf in boolsWithNull
             from useWindowsForms in boolsWithNull
             from useTransitiveFrameworksWorkaround in bools
-            select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround, settings.RxPackagesParsed, settings.PackageSource);
+            select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround, settings.RxMainPackageParsed, settings.PackageSource);
 
         foreach (Scenario scenario in scenarios)
         {

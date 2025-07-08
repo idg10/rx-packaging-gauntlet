@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RxGauntlet.Common\RxGauntlet.Common.csproj" />
+  </ItemGroup>
+
 </Project>

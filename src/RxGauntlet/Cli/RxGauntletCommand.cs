@@ -1,27 +1,15 @@
 ﻿using Spectre.Console.Cli;
 
-namespace RxGauntlet;
+namespace RxGauntlet.Cli;
 
-internal sealed class RxGauntletCommand : AsyncCommand<RxGauntletCommandSettings>
+internal abstract class RxGauntletCommandBase<TSettings> : AsyncCommand<TSettings>
+    where TSettings : CommandSettings, IOrchestrationCommandSettings
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, RxGauntletCommandSettings settings)
+    protected abstract TestRunPackageSelection[] GetPackageSelection(TSettings settings);
+
+    public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings)
     {
-        TestRunPackageSelection[] packageSelections;
-        if (settings.AllPublishedRx)
-        {
-            packageSelections =
-            [
-                new([new("System.Reactive.Linq", "3.0.0")], null),
-                new([new("System.Reactive.Linq", "3.1.0")], null),
-                new([new("System.Reactive", "4.4.1")], null),
-                new([new("System.Reactive", "5.0.0")], null),
-                new([new("System.Reactive", "6.0.1")], null),
-            ];
-        }
-        else
-        {
-            packageSelections = [new TestRunPackageSelection(settings.RxPackagesParsed, settings.PackageSource)];
-        }
+        TestRunPackageSelection[] packageSelections = GetPackageSelection(settings);
 
         TestType[] testTypes = TestType.All;
 

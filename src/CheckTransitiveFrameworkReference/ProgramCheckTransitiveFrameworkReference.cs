@@ -1,2 +1,8 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using CheckTransitiveFrameworkReference;
+
+using Spectre.Console.Cli;
+
+
+var app = new CommandApp<CheckTransitiveFrameworkReferenceCommand>();
+
+return await app.RunAsync(args);

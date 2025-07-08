@@ -14,4 +14,8 @@ namespace RxGauntlet;
 /// The URL or local file path of a custom NuGet package source, or <c>null</c> when the public NuGet feed should be
 /// used.
 /// </param>
-internal record TestRunPackageSelection(PackageIdAndVersion[] Packages, string? CustomPackageSource);
+internal record TestRunPackageSelection(
+    PackageIdAndVersion MainRxPackage,
+    PackageIdAndVersion? LegacyRxPackage,
+    PackageIdAndVersion[] RxUiPackages,
+    string? CustomPackageSource);

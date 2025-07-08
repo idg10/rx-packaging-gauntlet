@@ -11,12 +11,6 @@ internal class RunDeploymentBloatCheck
 {
     public static async Task<Issue1745TestRun> RunAsync(string testRunId, OffsetDateTime testRunDateTime, Scenario scenario, string? packageSource)
     {
-        if (scenario.RxPackages is not [PackageIdAndVersion firstRxPackage, ..])
-        {
-            // This should be caught during command line parsing, so we don't expect this.
-            throw new ArgumentException("scenario.RxPackages should not be empty");
-        }
-
         Console.WriteLine(scenario);
         string tfm = scenario.WindowsVersion is string windowsVersion
             ? $"{scenario.BaseNetTfm}-{windowsVersion}"
@@ -32,7 +26,7 @@ internal class RunDeploymentBloatCheck
             (projectFileRewriter) => RewriteProjectXmlDocument(
                 projectFileRewriter,
                 tfm,
-                scenario.RxPackages,
+                [scenario.RxMainPackage],
                 scenario.UseWpf,
                 scenario.UseWindowsForms,
                 scenario.EmitDisableTransitiveFrameworkReferences),
@@ -63,10 +57,10 @@ internal class RunDeploymentBloatCheck
 
             // Note: currently this test run has no specialized config so the schema generation
             // doesn't create a type to represent issue1745TestRunConfig. That's why we use
-            // the common TestRunConfig here.
+            // the common TestRunConfigWithUiFrameworkSettings here.
             NuGetPackage rxVersionPackage = NuGetPackage.Create(
-                id: firstRxPackage.PackageId,
-                version: firstRxPackage.Version,
+                id: scenario.RxMainPackage.PackageId,
+                version: scenario.RxMainPackage.Version,
                 packageSource: packageSource.AsNullableJsonString());
             var config = TestRunConfigWithUiFrameworkSettings.Create(
                 baseNetTfm: scenario.BaseNetTfm,

@@ -22,7 +22,7 @@ internal class CheckPluginIssue97Command : TestCommandBase<TestSettings>
             testDetails.TestRunId,
             testDetails.TestRunDateTime,
             jsonWriter,
-            settings.RxPackagesParsed,
+            settings.GetAllParsedPackages(),
             settings.PackageSource);
 
         jsonWriter.WriteEndArray();
