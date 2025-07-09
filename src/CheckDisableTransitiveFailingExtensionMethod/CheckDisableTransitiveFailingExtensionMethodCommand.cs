@@ -81,14 +81,13 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
                 },
                 settings.PackageSource is string packageSource ? [("loc", packageSource)] : null))
             {
-                int result = await projectClone.RunDotnetBuild("ExtensionMethods.DisableTransitiveWorkaroundFail.csproj");
+                BuildOutput buildResult = await projectClone.RunDotnetBuild("ExtensionMethods.DisableTransitiveWorkaroundFail.csproj");
 
-                Console.WriteLine($"{scenario}: {result}");
-                string binFolder = Path.Combine(projectClone.ClonedProjectFolderPath, "bin");
+                Console.WriteLine($"{scenario}: {buildResult}");
 
                 bool includesWpf = false;
                 bool includesWindowsForms = false;
-                foreach (string file in Directory.GetFiles(binFolder, "*", new EnumerationOptions { RecurseSubdirectories = true }))
+                foreach (string file in Directory.GetFiles(buildResult.OutputFolder, "*", new EnumerationOptions { RecurseSubdirectories = true }))
                 {
                     string filename = Path.GetFileName(file);
                     if (filename.Equals("PresentationFramework.dll", StringComparison.InvariantCultureIgnoreCase))
@@ -121,7 +120,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
                 }
                 return ExtensionMethodsWorkaroundTestRun.Create(
                     config: config,
-                    buildSucceeded: result == 0,
+                    buildSucceeded: buildResult.Succeeded,
                     deployedWindowsForms: includesWindowsForms,
                     deployedWpf: includesWpf,
                     testRunDateTime: testDetails.TestRunDateTime,

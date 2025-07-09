@@ -71,7 +71,7 @@ public class PlugInBuilder : IDisposable
             (project) =>
             {
                 project.SetTargetFramework(plugInDescriptor.TargetFrameworkMoniker);
-                project.AddPropertyGroup([new("AssemblyName", assemblyName)]);
+                project.AddAssemblyNameProperty(assemblyName);
                 project.ReplacePackageReference("System.Reactive", plugInDescriptor.RxPackages);
                 project.FixUpProjectReferences(PlugInTemplateProjectFolder);
             },

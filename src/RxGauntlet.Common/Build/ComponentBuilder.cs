@@ -9,7 +9,7 @@ public class ComponentBuilder(string appBuildTempFolderName) : IDisposable
     public string LocalNuGetPackageFolderPath { get; } =
         Path.Combine(Path.GetTempPath(), "RxGauntlet", LocalNuGetSourcePackageTempFolderName, DateTime.Now.ToString("yyyyMMdd-HHmmss"));
 
-    public async Task BuildLocalNuGetPackageAsync(
+    public async Task<BuildOutput> BuildLocalNuGetPackageAsync(
         string templateCsProj,
         Action<ProjectFileRewriter> modifyProjectFile,
         (string FeedName, string FeedLocation)[]? additionalPackageSources)
@@ -17,7 +17,7 @@ public class ComponentBuilder(string appBuildTempFolderName) : IDisposable
         (string projectTemplateFileName, ModifiedProjectClone projectClone) = CreateModifiedProjectClone(
             PackageTempFolderName, templateCsProj, modifyProjectFile, additionalPackageSources);
 
-        await projectClone.RunDotnetPack(projectTemplateFileName);
+        BuildOutput packResults = await projectClone.RunDotnetPack(projectTemplateFileName);
 
         if (!Directory.Exists(LocalNuGetPackageFolderPath))
         {
@@ -25,9 +25,9 @@ public class ComponentBuilder(string appBuildTempFolderName) : IDisposable
         }
 
         string nupkgPath = Directory.GetFiles(
-            projectClone.ClonedProjectFolderPath,
+            packResults.OutputFolder,
             "*.nupkg",
-            SearchOption.TopDirectoryOnly) switch
+            SearchOption.AllDirectories) switch
         {
             [] => throw new InvalidOperationException("No .nupkg file found after packing the project"),
             [string nupkgFile] => nupkgFile,
@@ -36,6 +36,8 @@ public class ComponentBuilder(string appBuildTempFolderName) : IDisposable
 
         string destinationNupkgPath = Path.Combine(LocalNuGetPackageFolderPath, Path.GetFileName(nupkgPath));
         File.Copy(nupkgPath, destinationNupkgPath);
+
+        return packResults;
     }
 
     /// <summary>
@@ -47,7 +49,7 @@ public class ComponentBuilder(string appBuildTempFolderName) : IDisposable
     /// <returns>
     /// A task that produces the path to the <c>bin\Release</c> folder of the built application.
     /// </returns>
-    public async Task<string> BuildAppAsync(
+    public async Task<BuildOutput> BuildAppAsync(
         string templateCsProj,
         Action<ProjectFileRewriter> modifyProjectFile,
         (string FeedName, string FeedLocation)[]? additionalPackageSources)
@@ -59,14 +61,9 @@ public class ComponentBuilder(string appBuildTempFolderName) : IDisposable
             ];
 
         (string projectTemplateFileName, ModifiedProjectClone project) = CreateModifiedProjectClone(
-            PackageTempFolderName, templateCsProj, modifyProjectFile, additionalPackageSources);
+            PackageTempFolderName, templateCsProj, modifyProjectFile, packageSourcesIncludingDynamicallyBuiltPackages);
 
-        await project.RunDotnetBuild(projectTemplateFileName);
-
-        return Path.Combine(
-            project.ClonedProjectFolderPath,
-            "bin",
-            "Release");
+        return await project.RunDotnetBuild(projectTemplateFileName);
     }
 
     private (string ProjectTemplateFileName, ModifiedProjectClone ProjectClone) CreateModifiedProjectClone(

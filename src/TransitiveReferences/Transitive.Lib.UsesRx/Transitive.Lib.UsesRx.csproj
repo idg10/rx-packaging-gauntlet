@@ -9,6 +9,23 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!--
+    Thes may be overwritten for each scenario.
+    -->
+    <_ScenarioDefineConstants></_ScenarioDefineConstants>
+    <_ScenarioWindowsDefineConstants>UseNonUiFrameworkRx</_ScenarioWindowsDefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);$(_ScenarioDefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(TargetFramework.Contains('windows'))">
+    <DefineConstants>$(DefineConstants);$(_ScenarioWindowsDefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+
   <ItemGroup>
     <!--
     This may be replaced when checks build a specific

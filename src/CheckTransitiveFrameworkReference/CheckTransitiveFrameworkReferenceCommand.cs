@@ -16,19 +16,25 @@ internal class CheckTransitiveFrameworkReferenceCommand : TestCommandBase<TestSe
 {
     protected override string DefaultOutputFilename => "CheckTransitiveFrameworkReference.json";
 
-    protected override Task<int> ExecuteTestAsync(
+    protected override async Task<int> ExecuteTestAsync(
         TestDetails testDetails,
         CommandContext context,
         TestSettings settings,
         Utf8JsonWriter jsonWriter)
     {
-        using RunTransitiveFrameworkReferenceCheck runCheck = new(settings.PackageSource is string packageSource ? [("loc", packageSource)] : null);
+        using RunTransitiveFrameworkReferenceCheck runCheck = new(
+            testDetails.TestRunId,
+            testDetails.TestRunDateTime,
+            settings.RxMainPackageParsed,
+            settings.RxLegacyPackageParsed,
+            settings.RxUiFrameworkPackagesParsed,
+            settings.PackageSource is string packageSource ? [("loc", packageSource)] : null);
         foreach (var scenario in Scenario.GetScenarios())
         {
-            
             Console.WriteLine(scenario);
+            await runCheck.RunScenarioAsync(scenario);
         }
 
-        return Task.FromResult(0);
+        return 0;
     }
 }

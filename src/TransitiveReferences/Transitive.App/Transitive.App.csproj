@@ -18,6 +18,10 @@
     <_ScenarioWindowsDefineConstants>InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature</_ScenarioWindowsDefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);$(_ScenarioDefineConstants)</DefineConstants>
+  </PropertyGroup>
+  
   <PropertyGroup Condition="$(TargetFramework.Contains('windows'))">
     <DefineConstants>$(DefineConstants);$(_ScenarioWindowsDefineConstants)</DefineConstants>
   </PropertyGroup>

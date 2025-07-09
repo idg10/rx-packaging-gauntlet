@@ -100,23 +100,24 @@ public sealed class ModifiedProjectClone : IDisposable
         }
     }
 
-    public async Task<int> RunDotnetBuild(string csProjName)
+    public async Task<BuildOutput> RunDotnetBuild(string csProjName)
     {
-        return await RunDotnet($"build -c Release {csProjName}");
+        return await RunDotnetCommonBuild("build", csProjName);
     }
 
-    public async Task<int> RunDotnetPack(string csProjName)
+    public async Task<BuildOutput> RunDotnetPack(string csProjName)
     {
-        return await RunDotnet($"pack -c Release {csProjName}");
+        return await RunDotnetCommonBuild("pack", csProjName);
     }
 
-    public async Task<int> RunDotnetPublish(string csProjName)
+    public async Task<BuildOutput> RunDotnetPublish(string csProjName)
     {
-        return await RunDotnet($"publish -c Release {csProjName}");
+        return await RunDotnetCommonBuild("publish", csProjName);
     }
 
-    private async Task<int> RunDotnet(string args)
+    private async Task<BuildOutput> RunDotnetCommonBuild(string command, string csProjName)
     {
+        string args = $"{command} -c Release {csProjName}";
         var startInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
@@ -133,6 +134,7 @@ public sealed class ModifiedProjectClone : IDisposable
         await process.WaitForExitAsync();
 
         Console.WriteLine($"dotnet exit code: {process.ExitCode}");
-        return process.ExitCode;
+        string outputFolder = Path.Combine(ClonedProjectFolderPath, "bin", "Release");
+        return new BuildOutput(process.ExitCode, outputFolder);
     }
 }
