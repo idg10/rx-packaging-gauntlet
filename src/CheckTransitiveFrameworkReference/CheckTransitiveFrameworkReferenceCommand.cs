@@ -2,12 +2,7 @@
 
 using Spectre.Console.Cli;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace CheckTransitiveFrameworkReference;
 
@@ -27,8 +22,10 @@ internal class CheckTransitiveFrameworkReferenceCommand : TestCommandBase<TestSe
         TestSettings settings,
         Utf8JsonWriter jsonWriter)
     {
+        using RunTransitiveFrameworkReferenceCheck runCheck = new(settings.PackageSource is string packageSource ? [("loc", packageSource)] : null);
         foreach (var scenario in Scenario.GetScenarios())
         {
+            
             Console.WriteLine(scenario);
         }
 

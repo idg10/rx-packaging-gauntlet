@@ -105,6 +105,11 @@ public sealed class ModifiedProjectClone : IDisposable
         return await RunDotnet($"build -c Release {csProjName}");
     }
 
+    public async Task<int> RunDotnetPack(string csProjName)
+    {
+        return await RunDotnet($"pack -c Release {csProjName}");
+    }
+
     public async Task<int> RunDotnetPublish(string csProjName)
     {
         return await RunDotnet($"publish -c Release {csProjName}");

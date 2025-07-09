@@ -4,18 +4,15 @@
   "$id": "http://endjin.com/schemas/rx-gauntlet/transitiveframeworkcheck",
   "$defs": {
     "transitiveFrameworkReferenceTestRun": {
-      "$ref": "./CommonSchema.json#/$defs/testRun",
-      "$comment": {
-        "allOf": [
-          { "$ref": "./CommonSchema.json#/$defs/testRun" },
-          { "$ref": "./CommonSchema.json#/$defs/bloatTestResults" }
-        ]
-      },
+      "allOf": [
+        { "$ref": "./CommonSchema.json#/$defs/testRun" },
+        { "$ref": "./CommonSchema.json#/$defs/bloatTestResults" }
+      ],
       "properties": {
         "config": { "$ref": "#/$defs/transitiveFrameworkReferenceTestRunConfig" },
 
-        "$comment": "We might need multiple before/after pairs for different tests",
         "beforeRxUpgrade": {
+          "$comment": "We might need multiple before/after pairs for different tests",
           "description": "The results pre-upgrade.",
           "$ref": "#/$defs/transitiveFrameworkReferenceTestPartResult"
         },
