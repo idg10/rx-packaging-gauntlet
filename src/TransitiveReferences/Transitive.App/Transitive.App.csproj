@@ -15,7 +15,7 @@
     Thes may be overwritten for each scenario.
     -->
     <_ScenarioDefineConstants>UseNonUiFrameworkSpecificRxDirectly</_ScenarioDefineConstants>
-    <_ScenarioWindowsDefineConstants>InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature</_ScenarioWindowsDefineConstants>
+    <_ScenarioWindowsDefineConstants>InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature;UseUiFrameworkSpecificRxDirectly</_ScenarioWindowsDefineConstants>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -95,7 +95,6 @@ internal record Scenario(
             (LibraryWindowsTargetUsesRxUiFeatures: true, AppInvokesLibraryCodePathsUsingRxUiFeatures: true, AppUseRxUiFeaturesDirectly: true),
         ];
 
-
         return
             from rxRef in rxRefDirectFromAppVsTransitive
             from rxUiUsage in rxUiUsages
@@ -110,8 +109,12 @@ internal record Scenario(
                 BeforeLibrary: rxRef.RxBefore is AcquisitionAndIsOld rxBefore
                     ? (rxBefore.ReferencesNewRxVersion ? newLibrary : oldLibrary)
                     : null,
-                BeforeAndAfterLibrary: rxRef.RxBeforeAndAfter.ReferencesNewRxVersion ? newLibrary : oldLibrary,
-                AfterLibrary: rxRef.RxAfter.ReferencesNewRxVersion ? newLibrary : oldLibrary,
+                BeforeAndAfterLibrary: rxRef.RxBeforeAndAfter.Acquisition == RxAcquiredVia.PackageTransitiveDependency
+                    ? rxRef.RxBeforeAndAfter.ReferencesNewRxVersion ? newLibrary : oldLibrary
+                    : null,
+                AfterLibrary: rxRef.RxAfter.Acquisition == RxAcquiredVia.PackageTransitiveDependency
+                    ? rxRef.RxAfter.ReferencesNewRxVersion ? newLibrary : oldLibrary
+                    : null,
                 rxUiUsage.AppUseRxUiFeaturesDirectly,
                 rxUiUsage.AppInvokesLibraryCodePathsUsingRxUiFeatures);
     }

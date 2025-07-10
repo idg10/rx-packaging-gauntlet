@@ -1,4 +1,5 @@
-﻿using System.Reactive.Disposables;
+﻿using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
 
 namespace Transitive.Lib.UsesRx;
 
@@ -8,7 +9,8 @@ public static class RxLib
     public static IDisposable UseRxWpf(Action callme)
     {
         Console.WriteLine("RxLib.UseRxWpf enter");
-        IDisposable result = System.Reactive.Concurrency.DispatcherScheduler.Current.Schedule(
+        Console.WriteLine($"Rx WPF: {typeof(DispatcherScheduler).Assembly.FullName}");
+        IDisposable result = DispatcherScheduler.Current.Schedule(
             default(object),
             (s_, _) =>
             {
@@ -23,6 +25,7 @@ public static class RxLib
     public static IDisposable UseRx(Action callme)
     {
         Console.WriteLine("RxLib.UseRx enter");
+        Console.WriteLine($"Rx: {typeof(CurrentThreadScheduler).Assembly.FullName}");
 
         // Using CurrentThreadScheduler because it invokes work items synchronously when it can,
         // and if the Schedule is not recursive (which it won't be in the way this test library
@@ -32,7 +35,7 @@ public static class RxLib
         // there's no particular guarantee of when it will run. For normal apps that's typically
         // fine, but it's not helpful for a console app that runs some simple tests and then
         // immediately exits.)
-        IDisposable result = System.Reactive.Concurrency.CurrentThreadScheduler.Instance.Schedule(
+        IDisposable result = CurrentThreadScheduler.Instance.Schedule(
             default(object),
             (cs, _) =>
             {

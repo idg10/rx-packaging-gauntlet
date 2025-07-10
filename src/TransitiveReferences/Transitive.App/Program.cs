@@ -1,5 +1,7 @@
 ﻿#if UseNonUiFrameworkSpecificRxDirectly
 using System.Reactive.Linq;
+#elif UseUiFrameworkSpecificRxDirectly
+using System.Reactive.Linq;
 #endif
 
 #if InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature
@@ -19,6 +21,16 @@ internal class Program
         Console.WriteLine("App using Rx directly start");
         Observable.Range(1, 1).Subscribe(x => Console.WriteLine($"Received {x} from Observable.Range"));
         Console.WriteLine("App using Rx directly end");
+        Console.WriteLine();
+#endif
+
+#if UseUiFrameworkSpecificRxDirectly
+        Console.WriteLine("App using Rx UI directly start");
+        Observable.Range(1, 1).ObserveOn(Dispatcher.CurrentDispatcher).Subscribe(x => Console.WriteLine($"Received {x} from Observable.Range"));
+        Console.WriteLine("Draining message loop after subscribe to ObserveOn(dispatcher)");
+        Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
+        Dispatcher.Run();
+        Console.WriteLine("App using Rx UI directly end");
         Console.WriteLine();
 #endif
 

@@ -33,7 +33,7 @@ public class RxSourceSettings : CommandSettings
     public PackageIdAndVersion RxMainPackageParsed => GetParsedPackage(ref _parsedRxMainPackage);
     public PackageIdAndVersion? RxLegacyPackageParsed => this.RxLegacyPackage is null
         ? null
-        : GetParsedPackage(ref _parsedRxMainPackage);
+        : GetParsedPackage(ref _parsedRxLegacyPackage);
 
     public PackageIdAndVersion[] RxUiFrameworkPackagesParsed
     {
