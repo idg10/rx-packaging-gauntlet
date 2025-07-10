@@ -3,6 +3,7 @@
 using RxGauntlet.Build;
 using RxGauntlet.LogModel;
 
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace CheckTransitiveFrameworkReference;
@@ -26,6 +27,9 @@ internal class RunTransitiveFrameworkReferenceCheck(
     private static readonly PackageIdAndVersion OldRx = new("System.Reactive", "6.0.1");
 
     private readonly ComponentBuilder _componentBuilder = new(AppTempFolderName);
+    private readonly Dictionary<LibraryDetails, PackageIdAndVersion> _builtLibPackages = new();
+
+    private int _scenarioCounter = 0;
 
     public void Dispose()
     {
@@ -35,6 +39,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
     public async Task<TransitiveFrameworkReferenceTestRun> RunScenarioAsync(
         Scenario scenario)
     {
+        Console.WriteLine(++_scenarioCounter);
         // TODO: do we need to distinguish between this and whether we get our Rx reference transitively or directly? Or are
         // we already handling that in the scenario variations?
         //scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly
@@ -46,10 +51,9 @@ internal class RunTransitiveFrameworkReferenceCheck(
 
 
         // Build all the NuGet packages we'll need, and work out what their package IDs and versions are.
-        Dictionary<LibraryDetails, PackageIdAndVersion> builtLibPackages = new();
         async Task ProcessLib(LibraryDetails ld)
         {
-            if (!builtLibPackages.ContainsKey(ld))
+            if (!_builtLibPackages.ContainsKey(ld))
             {
                 Console.WriteLine(ld);
                 // Note: we put the timestamp in so that we get a different package ID each time we run the test.
@@ -86,23 +90,9 @@ internal class RunTransitiveFrameworkReferenceCheck(
                             projectRewriter.ReplacePackageReference("System.Reactive", replaceSystemReactiveWith);
                         }
 
-                        if (!ld.HasWindowsTargetUsingUiFrameworkSpecificRxFeature
-                         || !scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly)
+                        if (!ld.HasWindowsTargetUsingUiFrameworkSpecificRxFeature)
                         {
-                            List<string> windowsDefineConstants = [];
-                            if (ld.HasWindowsTargetUsingUiFrameworkSpecificRxFeature)
-                            {
-                                windowsDefineConstants.Add("InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature");
-                            }
-
-                            if (scenario.AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature)
-                            {
-                                windowsDefineConstants.Add("UseUiFrameworkSpecificRxDirectly");
-                            }
-
-                            projectRewriter.ReplaceProperty(
-                                "_ScenarioWindowsDefineConstants",
-                                string.Join(";", windowsDefineConstants));
+                            projectRewriter.ReplaceProperty("_ScenarioWindowsDefineConstants", "");
                         }
                     },
                     additionalPackageSources);
@@ -112,7 +102,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                     throw new InvalidOperationException("Unexpected failure when building NuGet package to be consumed by test app");
                 }
 
-                builtLibPackages.Add(ld, new PackageIdAndVersion(assemblyName, packageVersion));
+                _builtLibPackages.Add(ld, new PackageIdAndVersion(assemblyName, packageVersion));
             }
         }
 
@@ -137,7 +127,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
 
         bool appExpectingToUseRxUiFeatures = scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly
             || scenario.AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature;
-        PackageIdAndVersion[] GetPackage(LibraryDetails? ld, RxAcquiredVia acq, bool isNew)
+        PackageIdAndVersion[] GetPackage(LibraryDetails? ld, RxAcquiredVia acq, bool packageRefsIncludeLegacyPackageIfAvailable)
         {
             //return acq switch
             //{
@@ -154,35 +144,38 @@ internal class RunTransitiveFrameworkReferenceCheck(
             //        _ => throw new ArgumentException($"Unknown enum entry {acq}", nameof(acq))
             //};
 
+            PackageIdAndVersion[] rxMainRef = packageRefsIncludeLegacyPackageIfAvailable
+                ? newRxMainAndIfRequiredLegacyPackage
+                : [rxMainPackage];
             if (ld is null)
             {
                 return acq switch
                 {
                     RxAcquiredVia.NoReference => [],
                     RxAcquiredVia.PackageTransitiveDependency => throw new InvalidOperationException($"{acq} requires library details"),
-                    RxAcquiredVia.PackageReferenceInProject => isNew
-                        ? (appExpectingToUseRxUiFeatures
-                            ? [..newRxMainAndIfRequiredLegacyPackage, ..rxUiPackages] : newRxMainAndIfRequiredLegacyPackage)
-                        : [OldRx],
+                    RxAcquiredVia.PackageReferenceInProjectNewRx => appExpectingToUseRxUiFeatures
+                        ? [..rxMainRef, ..rxUiPackages]
+                        : rxMainRef,
+                    RxAcquiredVia.PackageReferenceInProjectOldRx => [OldRx],
                     _ => throw new ArgumentException($"Unknown enum entry {acq}", nameof(acq))
                 };
             }
 
             Debug.Assert(acq == RxAcquiredVia.PackageTransitiveDependency,
                 $"When LibraryDetails are specified, RxAcquiredVia must be {RxAcquiredVia.PackageTransitiveDependency}");
-            return [builtLibPackages[ld]];
+            return [_builtLibPackages[ld]];
         }
 
         PackageIdAndVersion[] beforeLibraries =
             [
-                ..GetPackage(scenario.BeforeLibrary, scenario.RxBefore, isNew: false),
-                ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, isNew: false),
+                ..GetPackage(scenario.BeforeLibrary, scenario.RxBefore, packageRefsIncludeLegacyPackageIfAvailable: false),
+                ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, packageRefsIncludeLegacyPackageIfAvailable: false),
             ];
 
         PackageIdAndVersion[] afterLibraries =
             [
-                ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, isNew: false),
-                ..GetPackage(scenario.AfterLibrary, scenario.RxUpgrade, isNew: true),
+                ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, packageRefsIncludeLegacyPackageIfAvailable: true),
+                ..GetPackage(scenario.AfterLibrary, scenario.RxUpgrade, packageRefsIncludeLegacyPackageIfAvailable: true),
             ];
 
         async Task<BuildOutput> BuildApp(PackageIdAndVersion[] packageRefs)
@@ -194,19 +187,39 @@ internal class RunTransitiveFrameworkReferenceCheck(
                 AppTemplateProject,
                 projectRewriter =>
                 {
-                    projectRewriter.SetTargetFrameworks(scenario.ApplicationTfm);
+                    projectRewriter.SetTargetFramework(scenario.ApplicationTfm);
                     projectRewriter.ReplaceProjectReferenceWithPackageReference(
                         "Transitive.Lib.UsesRx.csproj",
                         packageRefs);
 
-                    if (!scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly)
+                    // Currently this is the only flag using _ScenarioDefineConstants,
+                    // so we don't need to accumulate the values.
+                    List<string> allTargetsDefineConstants = [];
+                    if (scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly)
                     {
-                        projectRewriter.ReplaceProperty("_ScenarioDefineConstants", "");
+                        allTargetsDefineConstants.Add("UseNonUiFrameworkSpecificRxDirectly");
                     }
-                    if (!scenario.AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature)
+                    if (scenario.AppInvokesLibraryMethodThatUsesNonUiFrameworkSpecificRxFeature)
                     {
-                        projectRewriter.ReplaceProperty("_ScenarioWindowsDefineConstants", "");
+                        allTargetsDefineConstants.Add("InvokeLibraryMethodThatUsesNonFrameworkSpecificRxFeature");
                     }
+                    projectRewriter.ReplaceProperty(
+                        "_ScenarioDefineConstants",
+                        string.Join(";", allTargetsDefineConstants));
+
+                    List<string> windowsDefineConstants = [];
+                    if (scenario.AppHasCodeUsingUiFrameworkSpecificRxDirectly)
+                    {
+                        windowsDefineConstants.Add("UseUiFrameworkSpecificRxDirectly");
+                    }
+                    if (scenario.AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature)
+                    {
+                        windowsDefineConstants.Add("InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature");
+                    }
+
+                    projectRewriter.ReplaceProperty(
+                        "_ScenarioWindowsDefineConstants",
+                        string.Join(";", windowsDefineConstants));
                 },
                 additionalPackageSources);
 
@@ -215,7 +228,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                 // TODO: do we actually want to run the app?
                 ProcessStartInfo startInfo = new()
                 {
-                    FileName = Path.Combine(r.OutputFolder, scenario.ApplicationTfm, "Transitive.App.exe"),
+                    FileName = Path.Combine(r.OutputFolder, scenario.ApplicationTfm, "win-x64", "Transitive.App.exe"),
                     UseShellExecute = false
                 };
                 using (var process = new Process { StartInfo = startInfo })
@@ -223,24 +236,28 @@ internal class RunTransitiveFrameworkReferenceCheck(
                     process.Start();
                     await process.WaitForExitAsync();
                 }
-
+            }
+            else
+            {
+                Debugger.Break();
             }
             return r;
         }
 
         // TODO: we will actually build two apps: before and after upgrade.
-        await BuildApp(beforeLibraries);
-        await BuildApp(afterLibraries);
+        BuildOutput beforeBuildResult = await BuildApp(beforeLibraries);
+        BuildOutput afterBuildResult = await BuildApp(afterLibraries);
 
-        // NEXT TIME 2025/07/09: we're using Transitive.Lib.UsesRx for both refs here, and one of them should be
-        // Rx.next, or possibly a completely different package.
-
-
-
-        var placeholder = TransitiveFrameworkReferenceTestPartResult.Create(
-            buildSucceeded: true,
-            deployedWindowsForms: false,
-            deployedWpf: false);
+        (bool deployedWindowsForms, bool deployedWpf) = beforeBuildResult.CheckForUiComponentsInOutput();
+        var beforeResult = TransitiveFrameworkReferenceTestPartResult.Create(
+            buildSucceeded: beforeBuildResult.Succeeded,
+            deployedWindowsForms: deployedWindowsForms,
+            deployedWpf: deployedWpf);
+        (deployedWindowsForms, deployedWpf) = afterBuildResult.CheckForUiComponentsInOutput();
+        var afterResult = TransitiveFrameworkReferenceTestPartResult.Create(
+            buildSucceeded: afterBuildResult.Succeeded,
+            deployedWindowsForms: deployedWindowsForms,
+            deployedWpf: deployedWpf);
         var config = TransitiveFrameworkReferenceTestRunConfig.Create(
             appTfm: scenario.ApplicationTfm,
             rxVersion: new NuGetPackage(),
@@ -250,12 +267,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
             testRunId: testRunId,
             testRunDateTime: testRunDateTime,
             config: config,
-
-            // TODO: make real!
-            // TODO: why are these deployedWindowsForms/Wpf here and also in the per test part section?
-            deployedWindowsForms: false,
-            deployedWpf: false,
-            beforeRxUpgrade: placeholder,
-            afterRxUpgrade : placeholder);
+            beforeRxUpgrade: beforeResult,
+            afterRxUpgrade: afterResult);
     }
 }

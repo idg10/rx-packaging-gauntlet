@@ -22,6 +22,8 @@ internal class CheckTransitiveFrameworkReferenceCommand : TestCommandBase<TestSe
         TestSettings settings,
         Utf8JsonWriter jsonWriter)
     {
+        jsonWriter.WriteStartArray();
+
         using RunTransitiveFrameworkReferenceCheck runCheck = new(
             testDetails.TestRunId,
             testDetails.TestRunDateTime,
@@ -32,8 +34,13 @@ internal class CheckTransitiveFrameworkReferenceCommand : TestCommandBase<TestSe
         foreach (var scenario in Scenario.GetScenarios())
         {
             Console.WriteLine(scenario);
-            await runCheck.RunScenarioAsync(scenario);
+            RxGauntlet.LogModel.TransitiveFrameworkReferenceTestRun testResult = await runCheck.RunScenarioAsync(scenario);
+
+            testResult.WriteTo(jsonWriter);
+            await jsonWriter.FlushAsync();
         }
+
+        jsonWriter.WriteEndArray();
 
         return 0;
     }

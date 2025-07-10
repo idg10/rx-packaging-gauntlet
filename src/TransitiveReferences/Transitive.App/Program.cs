@@ -1,15 +1,15 @@
-﻿#if UseNonUiFrameworkSpecificRxDirectly
-using System.Reactive.Linq;
-#elif UseUiFrameworkSpecificRxDirectly
+﻿#if UseNonUiFrameworkSpecificRxDirectly || UseUiFrameworkSpecificRxDirectly
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 #endif
 
-#if InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature
+#if InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature || UseUiFrameworkSpecificRxDirectly
 using System.Windows.Threading;
 #endif
 
+#if InvokeLibraryMethodThatUsesNonFrameworkSpecificRxFeature || InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature
 using Transitive.Lib.UsesRx;
-
+#endif
 
 internal class Program
 {
@@ -17,8 +17,12 @@ internal class Program
     [STAThread]
     private static async Task Main(string[] args)
     {
+        // In some configs, we would end up with no await, causing a compiler warning.
+        await Task.Yield();
+
 #if UseNonUiFrameworkSpecificRxDirectly
         Console.WriteLine("App using Rx directly start");
+        Console.WriteLine($"Rx (via app): {typeof(CurrentThreadScheduler).Assembly.FullName}");
         Observable.Range(1, 1).Subscribe(x => Console.WriteLine($"Received {x} from Observable.Range"));
         Console.WriteLine("App using Rx directly end");
         Console.WriteLine();
@@ -26,6 +30,7 @@ internal class Program
 
 #if UseUiFrameworkSpecificRxDirectly
         Console.WriteLine("App using Rx UI directly start");
+        Console.WriteLine($"Rx WPF (via lib): {typeof(System.Reactive.Concurrency.DispatcherScheduler).Assembly.FullName}");
         Observable.Range(1, 1).ObserveOn(Dispatcher.CurrentDispatcher).Subscribe(x => Console.WriteLine($"Received {x} from Observable.Range"));
         Console.WriteLine("Draining message loop after subscribe to ObserveOn(dispatcher)");
         Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
@@ -34,25 +39,26 @@ internal class Program
         Console.WriteLine();
 #endif
 
-
-        Console.WriteLine("App using RxLib non-UI start");
+#if InvokeLibraryMethodThatUsesNonFrameworkSpecificRxFeature
+        Console.WriteLine("RxLib non-UI start");
         RxLib.UseRx(() => { Console.WriteLine("Callback from RxLib.UseRx"); });
         Console.WriteLine("Yielding after RxLib.UseRx");
         await Task.Yield();
-        Console.WriteLine("App using RxLib non-UI end");
+        Console.WriteLine("RxLib non-UI end");
         Console.WriteLine();
+#endif
 
 #if InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature
         // This creates a Dispatcher for this thread.
         _ = Dispatcher.CurrentDispatcher;
 
         Console.WriteLine();
-        Console.WriteLine("App using RxLib UI start");
+        Console.WriteLine("RxLib UI start");
         RxLib.UseRxWpf(() => {  Console.WriteLine("Callback from RxLib.UseRxWpf"); });
         Console.WriteLine("Draining message loop after RxLib.UseRxWpf");
         Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
         Dispatcher.Run();
-        Console.WriteLine("App using RxLib UI end");
+        Console.WriteLine("RxLib UI end");
 #endif
     }
 }

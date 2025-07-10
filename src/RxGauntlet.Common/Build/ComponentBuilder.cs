@@ -63,7 +63,15 @@ public class ComponentBuilder(string appBuildTempFolderName) : IDisposable
         (string projectTemplateFileName, ModifiedProjectClone project) = CreateModifiedProjectClone(
             PackageTempFolderName, templateCsProj, modifyProjectFile, packageSourcesIncludingDynamicallyBuiltPackages);
 
+        // Slightly odd to build and publish. We want a normal build so we can just run out the bin folder, but
+        // we also need to publish to check for bloat.
         return await project.RunDotnetBuild(projectTemplateFileName);
+        ////if (result.Succeeded)
+        ////{
+        ////    result = await project.RunDotnetPublish(projectTemplateFileName);
+        ////}
+
+        ////return result;
     }
 
     private (string ProjectTemplateFileName, ModifiedProjectClone ProjectClone) CreateModifiedProjectClone(

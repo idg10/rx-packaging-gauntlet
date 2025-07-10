@@ -5,8 +5,7 @@
   "$defs": {
     "transitiveFrameworkReferenceTestRun": {
       "allOf": [
-        { "$ref": "./CommonSchema.json#/$defs/testRun" },
-        { "$ref": "./CommonSchema.json#/$defs/bloatTestResults" }
+        { "$ref": "./CommonSchema.json#/$defs/testRun" }
       ],
       "properties": {
         "config": { "$ref": "#/$defs/transitiveFrameworkReferenceTestRunConfig" },

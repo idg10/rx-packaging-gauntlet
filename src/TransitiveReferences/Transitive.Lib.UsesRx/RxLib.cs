@@ -9,7 +9,7 @@ public static class RxLib
     public static IDisposable UseRxWpf(Action callme)
     {
         Console.WriteLine("RxLib.UseRxWpf enter");
-        Console.WriteLine($"Rx WPF: {typeof(DispatcherScheduler).Assembly.FullName}");
+        Console.WriteLine($"Rx WPF (via lib): {typeof(DispatcherScheduler).Assembly.FullName}");
         IDisposable result = DispatcherScheduler.Current.Schedule(
             default(object),
             (s_, _) =>
@@ -25,7 +25,7 @@ public static class RxLib
     public static IDisposable UseRx(Action callme)
     {
         Console.WriteLine("RxLib.UseRx enter");
-        Console.WriteLine($"Rx: {typeof(CurrentThreadScheduler).Assembly.FullName}");
+        Console.WriteLine($"Rx (via lib): {typeof(CurrentThreadScheduler).Assembly.FullName}");
 
         // Using CurrentThreadScheduler because it invokes work items synchronously when it can,
         // and if the Schedule is not recursive (which it won't be in the way this test library

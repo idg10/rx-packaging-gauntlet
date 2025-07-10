@@ -32,24 +32,9 @@ internal class RunDeploymentBloatCheck
                 scenario.EmitDisableTransitiveFrameworkReferences),
                 packageSource is not null ? [("loc", packageSource)] : null))
         {
-            await projectClone.RunDotnetPublish("Bloat.ConsoleWinRtTemplate.csproj");
-            string binFolder = Path.Combine(projectClone.ClonedProjectFolderPath, "bin");
+            BuildOutput buildResult = await projectClone.RunDotnetPublish("Bloat.ConsoleWinRtTemplate.csproj");
 
-            bool includesWpf = false;
-            bool includesWindowsForms = false;
-            foreach (string file in Directory.GetFiles(binFolder, "*", new EnumerationOptions { RecurseSubdirectories = true }))
-            {
-                string filename = Path.GetFileName(file);
-                if (filename.Equals("PresentationFramework.dll", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    includesWpf = true;
-                }
-
-                if (filename.Equals("System.Windows.Forms.dll", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    includesWindowsForms = true;
-                }
-            }
+            (bool includesWpf, bool includesWindowsForms) = buildResult.CheckForUiComponentsInOutput();
 
             Console.WriteLine($"WPF: {includesWpf}");
             Console.WriteLine($"Windows Forms: {includesWindowsForms}");

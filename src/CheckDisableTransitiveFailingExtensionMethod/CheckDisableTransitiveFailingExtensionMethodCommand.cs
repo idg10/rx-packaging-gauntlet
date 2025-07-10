@@ -85,21 +85,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
 
                 Console.WriteLine($"{scenario}: {buildResult}");
 
-                bool includesWpf = false;
-                bool includesWindowsForms = false;
-                foreach (string file in Directory.GetFiles(buildResult.OutputFolder, "*", new EnumerationOptions { RecurseSubdirectories = true }))
-                {
-                    string filename = Path.GetFileName(file);
-                    if (filename.Equals("PresentationFramework.dll", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        includesWpf = true;
-                    }
-
-                    if (filename.Equals("System.Windows.Forms.dll", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        includesWindowsForms = true;
-                    }
-                }
+                (bool includesWpf, bool includesWindowsForms) = buildResult.CheckForUiComponentsInOutput();
 
                 Debug.Assert(!string.IsNullOrWhiteSpace(rxPackage), "rxPackage should not be null or empty.");
                 Debug.Assert(!string.IsNullOrWhiteSpace(rxVersion), "rxVersion should not be null or empty.");
