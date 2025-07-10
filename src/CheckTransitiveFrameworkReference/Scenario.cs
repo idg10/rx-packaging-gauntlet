@@ -1,4 +1,6 @@
-﻿namespace CheckTransitiveFrameworkReference;
+﻿using OneOf;
+
+namespace CheckTransitiveFrameworkReference;
 
 internal enum RxAcquiredVia
 {
@@ -27,12 +29,8 @@ internal enum RxAcquiredVia
 internal record Scenario(
     string ApplicationTfm,
     string TfmsOfBeforeAndAfterLibrary,
-    RxAcquiredVia RxBefore,
-    RxAcquiredVia RxUpgrade,
-    RxAcquiredVia RxBeforeAndAfter,
-    LibraryDetails? BeforeLibrary,
-    LibraryDetails? BeforeAndAfterLibrary,
-    LibraryDetails? AfterLibrary,
+    RxDependency[] RxDependenciesBefore,
+    RxDependency[] RxDependenciesAfter,
     bool AppHasCodeUsingNonUiFrameworkSpecificRxDirectly,
     bool AppHasCodeUsingUiFrameworkSpecificRxDirectly,
     bool AppInvokesLibraryMethodThatUsesNonUiFrameworkSpecificRxFeature,
@@ -85,9 +83,15 @@ internal record Scenario(
             // to say whether it's old or new, and whether it should include the legacy System.Reactive where
             // that's appropriate.
             new(
-                RxBeforeAndAfter: new(RxAcquiredVia.PackageReferenceInProjectNewRx, ReferencesNewRxVersion: true),
-                RxBefore: null,
-                RxAfter: new(RxAcquiredVia.PackageTransitiveDependency, ReferencesNewRxVersion: false)
+                RxBefore:
+                [
+                    new NewRx(IncludeLegacyPackageWhereAvailable: false, IncludeUiPackages: false)
+                ],
+                RxAfter:
+                [
+                    new NewRx(IncludeLegacyPackageWhereAvailable: true, IncludeUiPackages: false),
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false)
+                ]
             ),
         ];
 
@@ -102,10 +106,16 @@ internal record Scenario(
         {
             IEnumerable<RxUsageChoices> ForAppRxUsage(bool appUseRxNonUiFeatures, bool appUseRxUiFeatures)
             {
-                bool libAvailableBeforeAndAfter =
-                    appChoice.RxBeforeAndAfter.Acquisition == RxAcquiredVia.PackageTransitiveDependency ||
-                    ((appChoice.RxBefore?.Acquisition ?? RxAcquiredVia.NoReference) == RxAcquiredVia.PackageTransitiveDependency &&
-                     appChoice.RxAfter.Acquisition == RxAcquiredVia.PackageTransitiveDependency);
+                bool ReferencesLib(RxDependency[] deps) => deps
+                    .Any(ac => ac.Match((DirectRxPackageReference _) => false, (TransitiveRxReferenceViaLibrary _) => true));
+
+                bool libAvailableBefore = ReferencesLib(appChoice.RxBefore);
+                bool libAvailableAfter = ReferencesLib(appChoice.RxAfter);
+                bool libAvailableBeforeAndAfter = libAvailableBefore && libAvailableAfter;
+
+                    //appChoice.RxBeforeAndAfter.Acquisition == RxAcquiredVia.PackageTransitiveDependency ||
+                    //((appChoice.RxBefore?.Acquisition ?? RxAcquiredVia.NoReference) == RxAcquiredVia.PackageTransitiveDependency &&
+                    // appChoice.RxAfter.Acquisition == RxAcquiredVia.PackageTransitiveDependency);
                 return
                     from libOffersUi in libAvailableBeforeAndAfter ? boolValues : boolJustFalse
                     from appInvokesLibUi in (libOffersUi ? boolValues : boolJustFalse)
@@ -136,26 +146,16 @@ internal record Scenario(
 
         return
             from rxRef in rxRefDirectFromAppVsTransitive
-            //from appUsesNonUiRxDirectly in boolValues
-            //from rxUiUsage in rxUiUsages
+                //from appUsesNonUiRxDirectly in boolValues
+                //from rxUiUsage in rxUiUsages
             from rxUsage in GetRxUsages(rxRef)
             let oldLibrary = new LibraryDetails("net8.0;net8.0-windows10.0.19041", false, rxUsage.LibraryWindowsTargetUsesRxUiFeatures)
             let newLibrary = new LibraryDetails("net8.0;net8.0-windows10.0.19041", true, rxUsage.LibraryWindowsTargetUsesRxUiFeatures)
             select new Scenario(
                 ApplicationTfm: "net8.0-windows10.0.19041",
                 TfmsOfBeforeAndAfterLibrary: "net8.0;net8.0-windows10.0.19041",
-                RxBefore: rxRef.RxBefore?.Acquisition ?? RxAcquiredVia.NoReference,
-                RxUpgrade: rxRef.RxAfter.Acquisition,
-                RxBeforeAndAfter: rxRef.RxBeforeAndAfter.Acquisition,
-                BeforeLibrary: rxRef.RxBefore is AcquisitionAndIsOld rxBefore && rxBefore.Acquisition == RxAcquiredVia.PackageTransitiveDependency
-                    ? (rxBefore.ReferencesNewRxVersion ? newLibrary : oldLibrary)
-                    : null,
-                BeforeAndAfterLibrary: rxRef.RxBeforeAndAfter.Acquisition == RxAcquiredVia.PackageTransitiveDependency
-                    ? rxRef.RxBeforeAndAfter.ReferencesNewRxVersion ? newLibrary : oldLibrary
-                    : null,
-                AfterLibrary: rxRef.RxAfter.Acquisition == RxAcquiredVia.PackageTransitiveDependency
-                    ? rxRef.RxAfter.ReferencesNewRxVersion ? newLibrary : oldLibrary
-                    : null,
+                RxDependenciesBefore: rxRef.RxBefore,
+                RxDependenciesAfter: rxRef.RxAfter,
                 AppHasCodeUsingNonUiFrameworkSpecificRxDirectly: rxUsage.AppUseRxNonUiFeaturesDirectly,
                 AppHasCodeUsingUiFrameworkSpecificRxDirectly: rxUsage.AppUseRxUiFeaturesDirectly,
                 AppInvokesLibraryMethodThatUsesNonUiFrameworkSpecificRxFeature: rxUsage.AppInvokesLibraryCodePathsUsingRxNonUiFeatures,
@@ -163,9 +163,8 @@ internal record Scenario(
     }
 
     private record AppChoice(
-        AcquisitionAndIsOld RxBeforeAndAfter,
-        AcquisitionAndIsOld? RxBefore,
-        AcquisitionAndIsOld RxAfter);
+        RxDependency[] RxBefore,
+        RxDependency[] RxAfter);
 
     private record RxUsageChoices(
         bool LibraryWindowsTargetUsesRxUiFeatures,
@@ -181,3 +180,35 @@ internal record LibraryDetails(
     string Tfms,
     bool ReferencesNewRxVersion,
     bool HasWindowsTargetUsingUiFrameworkSpecificRxFeature);
+
+internal readonly record struct OldRx();
+internal readonly record struct NewRx(
+    bool IncludeLegacyPackageWhereAvailable,
+    bool IncludeUiPackages);
+
+internal readonly record struct TransitiveRxReferenceViaLibrary(
+    string Tfms,
+    bool ReferencesNewRxVersion,
+    bool HasWindowsTargetUsingUiFrameworkSpecificRxFeature);
+
+[GenerateOneOf]
+internal partial class DirectRxPackageReference : OneOfBase<OldRx, NewRx>;
+
+[GenerateOneOf]
+internal partial class RxDependency : OneOfBase<DirectRxPackageReference, TransitiveRxReferenceViaLibrary>
+{
+    // Although the source generator generates conversions for each of the types we specify, it does
+    // not appear to handle nesting. And although DirectRxPackageReference in turn has conversions to
+    // and from OldRx and NewRx, C# only allows a single level of implicit conversion.
+    //
+    // I want to be able to use the constituent types of DirectRxPackageReference (OldRx and NewRx)
+    // anywhere a RxDependency is required (just like I can use a TransitiveRxReferenceViaLibrary
+    // anywhere a RxDependency is required, or like I can use either OldRx or NewRx anywhere a
+    // DirectRxPackageReference is required). We enable this by defining conversions for those types
+    // here.
+    public static implicit operator RxDependency(OldRx _) => new DirectRxPackageReference(_);
+    public static explicit operator OldRx(RxDependency _) => _.AsT0.AsT0;
+
+    public static implicit operator RxDependency(NewRx _) => new DirectRxPackageReference(_);
+    public static explicit operator NewRx(RxDependency _) => _.AsT0.AsT1;
+}

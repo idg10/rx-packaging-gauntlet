@@ -27,7 +27,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
     private static readonly PackageIdAndVersion OldRx = new("System.Reactive", "6.0.1");
 
     private readonly ComponentBuilder _componentBuilder = new(AppTempFolderName);
-    private readonly Dictionary<LibraryDetails, PackageIdAndVersion> _builtLibPackages = new();
+    private readonly Dictionary<TransitiveRxReferenceViaLibrary, PackageIdAndVersion> _builtLibPackages = new();
 
     private int _scenarioCounter = 0;
 
@@ -51,7 +51,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
 
 
         // Build all the NuGet packages we'll need, and work out what their package IDs and versions are.
-        async Task ProcessLib(LibraryDetails ld)
+        async Task ProcessLib(TransitiveRxReferenceViaLibrary ld)
         {
             if (!_builtLibPackages.ContainsKey(ld))
             {
@@ -106,28 +106,26 @@ internal class RunTransitiveFrameworkReferenceCheck(
             }
         }
 
-        (LibraryDetails? Details, RxAcquiredVia Aquisition)[] libs =
+        //(LibraryDetails? Details, RxAcquiredVia Aquisition)[] libs =
+        RxDependency[] libs =
             [
-                (scenario.BeforeLibrary, scenario.RxBefore),
-                (scenario.AfterLibrary, scenario.RxUpgrade),
-                (scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter)
+                ..scenario.RxDependenciesBefore,
+                ..scenario.RxDependenciesAfter,
+                //(scenario.BeforeLibrary, scenario.RxBefore),
+                //(scenario.AfterLibrary, scenario.RxUpgrade),
+                //(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter)
             ];
-        foreach ((LibraryDetails? ld, RxAcquiredVia aq) in libs)
+        foreach (RxDependency dependency in libs)
         {
-            if (aq == RxAcquiredVia.PackageTransitiveDependency)
-            {
-                Debug.Assert(ld is not null, $"When {aq} specified, LibraryDetails are required");
-                await ProcessLib(ld);
-            }
-            else if (aq == RxAcquiredVia.NoReference)
-            {
-                Debug.Assert(ld is null, $"When {aq} specified, there should be no LibraryDetails");
-            }
+            await dependency.Match(
+                (DirectRxPackageReference _) => Task.CompletedTask,
+                ProcessLib);
         }
 
         bool appExpectingToUseRxUiFeatures = scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly
             || scenario.AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature;
-        PackageIdAndVersion[] GetPackage(LibraryDetails? ld, RxAcquiredVia acq, bool packageRefsIncludeLegacyPackageIfAvailable)
+        //PackageIdAndVersion[] GetPackage(LibraryDetails? ld, RxAcquiredVia acq, bool packageRefsIncludeLegacyPackageIfAvailable)
+        PackageIdAndVersion[] GetPackage(RxDependency rxDependency)
         {
             //return acq switch
             //{
@@ -144,39 +142,40 @@ internal class RunTransitiveFrameworkReferenceCheck(
             //        _ => throw new ArgumentException($"Unknown enum entry {acq}", nameof(acq))
             //};
 
-            PackageIdAndVersion[] rxMainRef = packageRefsIncludeLegacyPackageIfAvailable
-                ? newRxMainAndIfRequiredLegacyPackage
-                : [rxMainPackage];
-            if (ld is null)
+            return rxDependency.Match(GetPackageDirect, GetPackageTransitive);
+
+            PackageIdAndVersion[] GetPackageTransitive(TransitiveRxReferenceViaLibrary libRef)
             {
-                return acq switch
-                {
-                    RxAcquiredVia.NoReference => [],
-                    RxAcquiredVia.PackageTransitiveDependency => throw new InvalidOperationException($"{acq} requires library details"),
-                    RxAcquiredVia.PackageReferenceInProjectNewRx => appExpectingToUseRxUiFeatures
-                        ? [..rxMainRef, ..rxUiPackages]
-                        : rxMainRef,
-                    RxAcquiredVia.PackageReferenceInProjectOldRx => [OldRx],
-                    _ => throw new ArgumentException($"Unknown enum entry {acq}", nameof(acq))
-                };
+                return [_builtLibPackages[libRef]];
             }
 
-            Debug.Assert(acq == RxAcquiredVia.PackageTransitiveDependency,
-                $"When LibraryDetails are specified, RxAcquiredVia must be {RxAcquiredVia.PackageTransitiveDependency}");
-            return [_builtLibPackages[ld]];
+            PackageIdAndVersion[] GetPackageDirect(DirectRxPackageReference rxDependency)
+            {
+                return rxDependency.Match(
+                    (OldRx _) => [OldRx],
+                    (NewRx newRx) =>
+                    {
+                        PackageIdAndVersion[] rxMainRef = newRx.IncludeLegacyPackageWhereAvailable
+                            ? newRxMainAndIfRequiredLegacyPackage
+                            : [rxMainPackage];
+                        return newRx.IncludeUiPackages
+                            ? [.. rxMainRef, .. rxUiPackages]
+                            : rxMainRef;
+                    });
+            }
         }
 
-        PackageIdAndVersion[] beforeLibraries =
-            [
-                ..GetPackage(scenario.BeforeLibrary, scenario.RxBefore, packageRefsIncludeLegacyPackageIfAvailable: false),
-                ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, packageRefsIncludeLegacyPackageIfAvailable: false),
-            ];
+        PackageIdAndVersion[] beforeLibraries = scenario.RxDependenciesBefore.SelectMany(dep => GetPackage(dep)).ToArray();
+        //[
+        //    ..GetPackage(scenario.BeforeLibrary, scenario.RxBefore, packageRefsIncludeLegacyPackageIfAvailable: false),
+        //    ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, packageRefsIncludeLegacyPackageIfAvailable: false),
+        //];
 
-        PackageIdAndVersion[] afterLibraries =
-            [
-                ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, packageRefsIncludeLegacyPackageIfAvailable: true),
-                ..GetPackage(scenario.AfterLibrary, scenario.RxUpgrade, packageRefsIncludeLegacyPackageIfAvailable: true),
-            ];
+        PackageIdAndVersion[] afterLibraries = scenario.RxDependenciesAfter.SelectMany(dep => GetPackage(dep)).ToArray();
+        //[
+        //        ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, packageRefsIncludeLegacyPackageIfAvailable: true),
+        //        ..GetPackage(scenario.AfterLibrary, scenario.RxUpgrade, packageRefsIncludeLegacyPackageIfAvailable: true),
+        //    ];
 
         async Task<BuildOutput> BuildApp(PackageIdAndVersion[] packageRefs)
         {
