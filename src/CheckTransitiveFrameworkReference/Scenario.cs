@@ -1,17 +1,11 @@
 ﻿
 #pragma warning disable IDE0350 // Use implicitly typed lambda - in OneOf matches, it's typically easier to understand with explicit parameter types
 
+using CheckTransitiveFrameworkReference.ScenarioGeneration;
+
 using OneOf;
 
 namespace CheckTransitiveFrameworkReference;
-
-internal enum RxAcquiredVia
-{
-    NoReference,
-    PackageReferenceInProjectOldRx,
-    PackageReferenceInProjectNewRx,
-    PackageTransitiveDependency
-}
 
 /// <summary>
 /// 
@@ -50,7 +44,7 @@ internal record Scenario(
         //
         // App dimension 1: Rx initially referenced directly by app csproj vs only referenced transitively
         // App dimension 2: latest version via csproj vs reference
-        AppChoice[] appChoices =
+        AppDependencies[] appDependencyChoices =
         [
             // Dim 1: initially transitive reference to old
             // Dim 2: latest acquired by adding package ref to project
@@ -241,7 +235,7 @@ internal record Scenario(
         //  Does the app use the code in the library that uses UI-framework-specific Rx functionality?
         //  Does the app uses UI-framework-specific Rx functionality directly?
         // (The first two aren't quite independent, because the app can't use code that the library doesn't have.)
-        RxUsageChoices[] GetRxUsages(AppChoice appChoice)
+        RxUsageChoices[] GetRxUsages(AppDependencies appChoice)
         {
             // Work out whether the app has a reference to the library that uses Rx. (This determines
             // whether we emit code in the app that calls into that library.)
@@ -309,7 +303,7 @@ internal record Scenario(
                  .ToArray();
         }
 
-        bool ShouldTestDisableTransitiveFrameworksWorkaround(AppChoice appChoice)
+        bool ShouldTestDisableTransitiveFrameworksWorkaround(AppDependencies appChoice)
         {
             // If the 'after' app continues to have a reference to the old System.Reactive (which happens in
             // some scenarios we test - perhaps the app doesn't use Rx directly, and ends up with transitive
@@ -335,7 +329,7 @@ internal record Scenario(
         }
 
         return
-            from appChoice in appChoices
+            from appChoice in appDependencyChoices
             from rxUsage in GetRxUsages(appChoice)
             from disableTransitiveFrameworkReferences in (ShouldTestDisableTransitiveFrameworksWorkaround(appChoice) ? boolValues : [false])
             select new Scenario(
@@ -350,17 +344,12 @@ internal record Scenario(
                 AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature: rxUsage.AppInvokesLibraryCodePathsUsingRxUiFeatures);
     }
 
-    private record AppChoice(
-        RxDependency[] RxBefore,
-        RxDependency[] RxAfter);
-
     private record RxUsageChoices(
         bool AppInvokesLibraryCodePathsUsingRxNonUiFeatures,
         bool AppInvokesLibraryCodePathsUsingRxUiFeatures,
         bool AppUseRxNonUiFeaturesDirectly,
         bool AppUseRxUiFeaturesDirectly);
 }
-
 internal readonly record struct OldRx();
 
 internal enum NewRxLegacyOptions
