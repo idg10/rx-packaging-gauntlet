@@ -72,11 +72,11 @@ internal class RunTransitiveFrameworkReferenceCheck(
 
                 BuildOutput packageBuildResult = await _componentBuilder.BuildLocalNuGetPackageAsync(
                     LibTemplateProject,
-                    projectRewriter =>
+                    project =>
                     {
-                        projectRewriter.SetTargetFrameworks(ld.Tfms);
-                        projectRewriter.AddAssemblyNameProperty(assemblyName);
-                        projectRewriter.AddPropertyGroup([new("Version", packageVersion)]);
+                        project.SetTargetFrameworks(ld.Tfms);
+                        project.AddAssemblyNameProperty(assemblyName);
+                        project.AddPropertyGroup([new("Version", packageVersion)]);
 
                         if (ld.ReferencesNewRxVersion)
                         {
@@ -87,12 +87,12 @@ internal class RunTransitiveFrameworkReferenceCheck(
                             PackageIdAndVersion[] replaceSystemReactiveWith = ld.HasWindowsTargetUsingUiFrameworkSpecificRxFeature
                                 ? [..newRxMainAndIfRequiredLegacyPackage, ..rxUiPackages]
                                 : newRxMainAndIfRequiredLegacyPackage;
-                            projectRewriter.ReplacePackageReference("System.Reactive", replaceSystemReactiveWith);
+                            project.ReplacePackageReference("System.Reactive", replaceSystemReactiveWith);
                         }
 
                         if (!ld.HasWindowsTargetUsingUiFrameworkSpecificRxFeature)
                         {
-                            projectRewriter.ReplaceProperty("_ScenarioWindowsDefineConstants", "");
+                            project.ReplaceProperty("_ScenarioWindowsDefineConstants", "");
                         }
                     },
                     additionalPackageSources);
@@ -177,19 +177,23 @@ internal class RunTransitiveFrameworkReferenceCheck(
         //        ..GetPackage(scenario.AfterLibrary, scenario.RxUpgrade, packageRefsIncludeLegacyPackageIfAvailable: true),
         //    ];
 
-        async Task<BuildOutput> BuildApp(PackageIdAndVersion[] packageRefs)
+        async Task<BuildOutput> BuildApp(PackageIdAndVersion[] packageRefs, bool isAfter)
         {
             // Note that the ComponentBuilder automatically adds the dynamically created package source
             // (which contains any packages just built with _componentBuilder.BuildLocalNuGetPackageAsync)
             // to the list of available feeds, combining that with and feeds specified in this call.
             BuildOutput r = await _componentBuilder.BuildAppAsync(
                 AppTemplateProject,
-                projectRewriter =>
+                project =>
                 {
-                    projectRewriter.SetTargetFramework(scenario.ApplicationTfm);
-                    projectRewriter.ReplaceProjectReferenceWithPackageReference(
+                    project.SetTargetFramework(scenario.ApplicationTfm);
+                    project.ReplaceProjectReferenceWithPackageReference(
                         "Transitive.Lib.UsesRx.csproj",
                         packageRefs);
+                    if (isAfter && scenario.DisableTransitiveFrameworkReferencesAfter)
+                    {
+                        project.AddPropertyGroup([new("DisableTransitiveFrameworkReferences", "True")]);
+                    }
 
                     // Currently this is the only flag using _ScenarioDefineConstants,
                     // so we don't need to accumulate the values.
@@ -202,7 +206,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                     {
                         allTargetsDefineConstants.Add("InvokeLibraryMethodThatUsesNonFrameworkSpecificRxFeature");
                     }
-                    projectRewriter.ReplaceProperty(
+                    project.ReplaceProperty(
                         "_ScenarioDefineConstants",
                         string.Join(";", allTargetsDefineConstants));
 
@@ -216,7 +220,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                         windowsDefineConstants.Add("InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature");
                     }
 
-                    projectRewriter.ReplaceProperty(
+                    project.ReplaceProperty(
                         "_ScenarioWindowsDefineConstants",
                         string.Join(";", windowsDefineConstants));
                 },
@@ -244,8 +248,8 @@ internal class RunTransitiveFrameworkReferenceCheck(
         }
 
         // TODO: we will actually build two apps: before and after upgrade.
-        BuildOutput beforeBuildResult = await BuildApp(beforeLibraries);
-        BuildOutput afterBuildResult = await BuildApp(afterLibraries);
+        BuildOutput beforeBuildResult = await BuildApp(beforeLibraries, isAfter: false);
+        BuildOutput afterBuildResult = await BuildApp(afterLibraries, isAfter: true);
 
         (bool deployedWindowsForms, bool deployedWpf) = beforeBuildResult.CheckForUiComponentsInOutput();
         var beforeResult = TransitiveFrameworkReferenceTestPartResult.Create(
@@ -258,15 +262,41 @@ internal class RunTransitiveFrameworkReferenceCheck(
             deployedWindowsForms: deployedWindowsForms,
             deployedWpf: deployedWpf);
         var config = TransitiveFrameworkReferenceTestRunConfig.Create(
-            appTfm: scenario.ApplicationTfm,
-            rxVersion: new NuGetPackage(),
-            oldRxVersion: new RxVersion(),
-            newRxVersion: new RxVersion());
+            rxVersion: NuGetPackage.Create(rxMainPackage.PackageId, rxMainPackage.Version),
+            appUsesRxNonUiDirectly: scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly,
+            appUsesRxUiDirectly: scenario.AppHasCodeUsingUiFrameworkSpecificRxDirectly,
+            appUsesRxNonUiViaLibrary: scenario.AppInvokesLibraryMethodThatUsesNonUiFrameworkSpecificRxFeature,
+            appUsesRxUiViaLibrary: scenario.AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature,
+            before: MakeConfig(scenario.RxDependenciesBefore, false),
+            after: MakeConfig(scenario.RxDependenciesAfter, scenario.DisableTransitiveFrameworkReferencesAfter));
         return TransitiveFrameworkReferenceTestRun.Create(
             testRunId: testRunId,
             testRunDateTime: testRunDateTime,
             config: config,
-            beforeRxUpgrade: beforeResult,
-            afterRxUpgrade: afterResult);
+            resultsBefore: beforeResult,
+            resultsAfter: afterResult);
+    }
+
+    private static TestRunPartConfig MakeConfig(RxDependency[] deps, bool disableTransitiveFrameworkReferences)
+    {
+        return TestRunPartConfig.Create(
+            directRefToOldRx: deps.Any(d => d.IsOldRx),
+            directRefToNewRxMain: deps.Any(d => d.IsNewRx),
+            directRefToNewRxLegacyFacade: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.IncludeLegacyPackageWhereAvailable),
+            directRefToNewRxUiPackages: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.IncludeUiPackages),
+
+            transitiveRefToOldRx: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
+                out TransitiveRxReferenceViaLibrary tr) && !tr.ReferencesNewRxVersion),
+            transitiveRefToNewRxMain: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
+                out TransitiveRxReferenceViaLibrary tr) && tr.ReferencesNewRxVersion),
+            transitiveRefToNewRxLegacyFacade: false, // Currently we don't have a way to make this happen.
+
+            // Currently these next two properties are always the same.
+            transitiveRefToNewRxUiPackages: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
+                out TransitiveRxReferenceViaLibrary tr) && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature),
+            transitiveRefUsesRxUiFeatures: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
+                out TransitiveRxReferenceViaLibrary tr) && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature),
+
+            disableTransitiveFrameworkReferences: disableTransitiveFrameworkReferences);
     }
 }
