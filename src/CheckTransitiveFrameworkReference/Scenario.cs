@@ -1,7 +1,5 @@
 ﻿using OneOf;
 
-using System.Diagnostics;
-
 namespace CheckTransitiveFrameworkReference;
 
 internal enum RxAcquiredVia
@@ -39,10 +37,8 @@ internal record Scenario(
     bool AppInvokesLibraryMethodThatUsesNonUiFrameworkSpecificRxFeature,
     bool AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature) // TODO: do we need before/after/both flavours of this?
 {
-    //private readonly static bool[] boolValues = [false, true];
-    //private readonly static bool[] boolJustFalse = [false];
-    private readonly static IEnumerable<bool> boolValues = [false, true];
-    private readonly static IEnumerable<bool> boolJustFalse = [false];
+    private readonly static bool[] boolValues = [false, true];
+    private readonly static bool[] boolJustFalse = [false];
 
     public static IEnumerable<Scenario> GetScenarios()
     {
@@ -53,9 +49,18 @@ internal record Scenario(
         // App dimension 2: latest version via csproj vs reference
         AppChoice[] appChoices =
         [
-            //// Commented out because we've tested these. Restore once finished testing later ones.
             // Dim 1: initially transitive reference to old
             // Dim 2: latest acquired by adding package ref to project
+            // If System.Reactive is relegated to being a legacy facade, there are actually three variations here:
+            //  Just add a reference to new main Rx package
+            //  Just add a reference to new legacy Rx package
+            //  Add references to both
+            // This is the 'Just add a reference to new main Rx package' version, and this corresponds to an
+            // application that had happily (perhaps obliviously) been using a package that depends on Rx 6,
+            // and the app developer now decides to use Rx in the main app, and adds a reference to the new
+            // main rx package.
+            // If System.Reactive is relegated to a legacy facade, this causes build errors, because there are now two
+            // versions of Rx available: the old via System.Reactive v6, and the new via System.Reactive.Net v7.
             new(
                 RxBefore:
                 [
@@ -64,68 +69,166 @@ internal record Scenario(
                 RxAfter:
                 [
                     new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
-                    new NewRx(IncludeLegacyPackageWhereAvailable: false, IncludeUiPackages: false),
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.JustMain, IncludeUiPackages: false),
+                ]
+            ),
+            // This is the 'Just add a reference to new legacy Rx package' version, and this corresponds to
+            // a situation where an application had been using a package that depends on Rx 6, and wants to
+            // upgrade it to use the latest Rx (either because they're getting a deprecation warning from the NuGet
+            // package manager, or because they are trying to get rid of bloat) but doesn't add a reference to
+            // the main version.
+            // We won't expect build errors with this.
+            new(
+                RxBefore:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false)
+                ],
+                RxAfter:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.JustLegacy, IncludeUiPackages: false),
+                ]
+            ),
+            // This is the 'Add references to both' version, which will typically correspond to what an app developer does
+            // next after trying the 'Just add a reference to new main Rx package' version and getting a build error.
+            // Hopefully we'll be able to emit a build message suggesting that they want to add a reference to the new
+            // System.Reactive, and if they try that, this is what they'll end up with.
+            // We won't expect build errors with this.
+            new(
+                RxBefore:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false)
+                ],
+                RxAfter:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.MainAndLegacy, IncludeUiPackages: false),
+                ]
+            ),
+            // TODO: scenarios around using UI features?
+
+            // Dim 1: initially transitive AND package reference to old
+            // Dim 2: latest acquired by updating package ref in project
+            // As with the preceding cases, if System.Reactive is relegated to being a legacy facade, there are actually
+            // three variations here:
+            //  Replace reference with new main Rx package  (System.Reactive v6 -> System.Reactive.Net v7)
+            //  Update reference to new legacy Rx package (System.Reactive v6 -> System.Reactive v7)
+            //  Update legacy package reference AND add new main (System.Reactive v6 ->
+            //                                                     System.Reactive v7 + System.Reactive.Net v7)
+            // This first one, in which we replace the app's reference with the new main package will hit build errors
+            // because we end up with two versions of Rx in scope.
+            new(
+                RxBefore:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
+                    new OldRx()
+                ],
+                RxAfter:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
+                    new NewRx(NewRxLegacyOptions.JustMain, IncludeUiPackages: false),
+                ]
+            ),
+            // This second one, in which we just upgrade the existing System.Reactive reference to v7 (which means our
+            // app will now explicitly be using Rx via the legacy facade) shouldn't cause compile errors, but may result
+            // in bloat. But it's also not the preferred way to use Rx. Code written against v7 shouldn't really be using
+            // the legacy facade as its way of getting access to the Rx API.
+            // (We may want to look into issuing a compiler diagnostic about that.)
+            new(
+                RxBefore:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
+                    new OldRx()
+                ],
+                RxAfter:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
+                    new NewRx(NewRxLegacyOptions.JustLegacy, IncludeUiPackages: false),
+                ]
+            ),
+            // Here, we're upgrading the legacy System.Reactive and also using the new System.Reactive.Net. Since we're using
+            // the new System.Reactive, its type forwarders make it clear that everything really lives in System.Reactive.Net,
+            // and so we're back to having just one Rx.
+            // There may be bloat issues with this depending on whether System.Reactive v7 continues to force a dependency
+            // on the desktop framework.
+            new(
+                RxBefore:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
+                    new OldRx()
+                ],
+                RxAfter:
+                [
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false),
+                    new NewRx(NewRxLegacyOptions.MainAndLegacy, IncludeUiPackages: false),
                 ]
             ),
 
-            ////// Dim 1: initially transitive AND package reference to old
-            ////// Dim 2: latest acquired by updating package ref in project
-            ////new(
-            ////    RxBeforeAndAfter: new(RxAcquiredVia.PackageTransitiveDependency, ReferencesNewRxVersion: false),
-            ////    RxBefore:  new(RxAcquiredVia.PackageReferenceInProjectOldRx, ReferencesNewRxVersion: false),
-            ////    RxAfter: new(RxAcquiredVia.PackageReferenceInProjectNewRx, ReferencesNewRxVersion: true)
-            ////),
+            // Dim 1: initially package reference to new, then we add a transitive ref to the old
+            // Dim 2: direct ref to latest package in csproj (both before and after)
+            //
+            // TODO: I'm starting to think that this AppChoice needs to include whether we have UseWpf/UseWindowsForms,
+            // and also a more flexible before/after spec: it might need to be able to provide a list of what to
+            // do there, and when we specify an Rx package reference direct from the app, that needs to be able
+            // to say whether it's old or new, and whether it should include the legacy System.Reactive where
+            // that's appropriate.
 
-            ////// Dim 1: initially package reference to new, then we add a transitive ref to the old
-            ////// Dim 2: direct ref to latest package in csproj (both before and after)
-            //////
-            ////// TODO: I'm starting to think that this AppChoice needs to include whether we have UseWpf/UseWindowsForms,
-            ////// and also a more flexible before/after spec: it might need to be able to provide a list of what to
-            ////// do there, and when we specify an Rx package reference direct from the app, that needs to be able
-            ////// to say whether it's old or new, and whether it should include the legacy System.Reactive where
-            ////// that's appropriate.
+            // This models a scenario a developer will typically stumble into:
+            //  * already using new Rx
+            //  * adds reference to a library that uses old Rx
+            // In designs where System.Reactive is no longer the main package, we expect compiler errors
+            // if the main app code itself use using Rx, because we will now effectively have two
+            // versions of Rx in scope. If the main app itself doesn't use Rx directly, then we don't
+            // expect compiler errors—having two versions of Rx around is fine in that case, because
+            // nobody anywhere is trying to compiler Rx code in the scopes where both versions are
+            // available.
+            // TODO: In either case, would we also want to check whether the build issues a warning advising
+            // you to add a reference to a newer version of the legacy package?
+            new(
+                RxBefore:
+                [
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.JustMain, IncludeUiPackages: false)
+                ],
+                RxAfter:
+                [
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.JustMain, IncludeUiPackages: false),
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false)
+                ]
+            ),
 
-            ////// This models a scenario a developer will typically stumble into:
-            //////  * already using new Rx
-            //////  * adds reference to a library that uses old Rx
-            ////// In designs where System.Reactive is no longer the main package, we expect compiler errors
-            ////// if the main app code itself use using Rx, because we will now effectively have two
-            ////// versions of Rx in scope. If the main app itself doesn't use Rx directly, then we don't
-            ////// expect compiler errors—having two versions of Rx around is fine in that case, because
-            ////// nobody anywhere is trying to compiler Rx code in the scopes where both versions are
-            ////// available.
-            ////// TODO: In either case, would we also want to check whether the build issues a warning advising
-            ////// you to add a reference to a newer version of the legacy package?
-            ////new(
-            ////    RxBefore:
-            ////    [
-            ////        new NewRx(IncludeLegacyPackageWhereAvailable: false, IncludeUiPackages: false)
-            ////    ],
-            ////    RxAfter:
-            ////    [
-            ////        new NewRx(IncludeLegacyPackageWhereAvailable: false, IncludeUiPackages: false),
-            ////        new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false)
-            ////    ]
-            ////),
-
-            ////// This models the case where the developer stumbled into the preceding scenario, and got
-            ////// compiler errors (which only happens when we're looking at a future Rx design that relegates
-            ////// System.Reactive to a legacy package) but they then added a reference to the new version of
-            ////// the legacy System.Reactive package to fix the compiler errors.
-            ////// This fixes the compiler errors, but if the legacy System.Reactive package continues to cause
-            ////// a framework reference to Microsoft.WindowsDesktop.App, we now get bloat in self-contained
-            ////// deployments.
-            ////new(
-            ////    RxBefore:
-            ////    [
-            ////        new NewRx(IncludeLegacyPackageWhereAvailable: false, IncludeUiPackages: false)
-            ////    ],
-            ////    RxAfter:
-            ////    [
-            ////        new NewRx(IncludeLegacyPackageWhereAvailable: true, IncludeUiPackages: false),
-            ////        new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false)
-            ////    ]
-            ////),
+            // This models the case where the developer stumbled into the preceding scenario, and got
+            // compiler errors (which only happens when we're looking at a future Rx design that relegates
+            // System.Reactive to a legacy package) but they then added a reference to the new version of
+            // the legacy System.Reactive package to fix the compiler errors.
+            // This fixes the compiler errors, but if the legacy System.Reactive package continues to cause
+            // a framework reference to Microsoft.WindowsDesktop.App, we now get bloat in self-contained
+            // deployments.
+            new(
+                RxBefore:
+                [
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.JustMain, IncludeUiPackages: false)
+                ],
+                RxAfter:
+                [
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.MainAndLegacy, IncludeUiPackages: false),
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false)
+                ]
+            ),
+            // Variation in which instead of adding a reference to the new System.Reactive legacy package, they
+            // *replace* the System.Reactive.Net package reference with a reference to the new System.Reactive
+            // legacy package. (People who like to minize their package references may well do this because
+            // the new System.Reactive legacy package depends on System.Reactive.Net, so you don't really need both)
+            new(
+                RxBefore:
+                [
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.JustMain, IncludeUiPackages: false)
+                ],
+                RxAfter:
+                [
+                    new NewRx(LegacyPackageChoice: NewRxLegacyOptions.JustLegacy, IncludeUiPackages: false),
+                    new TransitiveRxReferenceViaLibrary("net8.0;net8.0-windows10.0.19041", ReferencesNewRxVersion: false, HasWindowsTargetUsingUiFrameworkSpecificRxFeature: false)
+                ]
+            ),
         ];
 
         // App dimension 3: use of RX UI features
@@ -148,8 +251,7 @@ internal record Scenario(
 
             // Determine whether Rx UI features are available to the library that gives us a transitive
             // Rx reference (if such a library is referenced at all).
-            bool ReferencesLibThatHasCouldUseRxUi(RxDependency[] deps) => deps
-                .Any(ac => ac.Match(
+            bool ReferenceIsLibThatHasCouldUseRxUi(RxDependency ac) => ac.Match(
                     (DirectRxPackageReference rx) => false,
                     (TransitiveRxReferenceViaLibrary t) =>
                     // Rx UI always available to old version.
@@ -158,10 +260,20 @@ internal record Scenario(
                     // with references to the Rx UI framework packages if the library is going to use them.
                     // In principle, it would be possible for the library to refer to, say, System.Reactive.For.Wpf,
                     // but not use it. Since this doesn't seem like a useful scenario, we don't model it.
-                    || t.HasWindowsTargetUsingUiFrameworkSpecificRxFeature));
+                    || t.HasWindowsTargetUsingUiFrameworkSpecificRxFeature);
+            bool ReferencesLibThatHasCouldUseRxUi(RxDependency[] deps) => deps.Any(ReferenceIsLibThatHasCouldUseRxUi);
             bool uiAvailableToLibInBefore = ReferencesLibThatHasCouldUseRxUi(appChoice.RxBefore);
             bool uiAvailableToLibInAfter = ReferencesLibThatHasCouldUseRxUi(appChoice.RxAfter);
             bool uiAvailableToLibInBeforeAndAfter = uiAvailableToLibInBefore && uiAvailableToLibInAfter;
+
+            // Determines whether the library will in fact offer a public API that uses UI-specific Rx features.
+            bool ReferencesLibThatProvidesUiFeature(RxDependency[] deps) => deps
+                .Any(ac => ReferenceIsLibThatHasCouldUseRxUi(ac) && ac.Match(
+                    (DirectRxPackageReference rx) => false,
+                    (TransitiveRxReferenceViaLibrary t) => t.HasWindowsTargetUsingUiFrameworkSpecificRxFeature));
+            bool libProvidesUiFeatureInBefore = ReferencesLibThatProvidesUiFeature(appChoice.RxBefore);
+            bool libProvidesUiFeatureInAfter = ReferencesLibThatProvidesUiFeature(appChoice.RxAfter);
+            bool libProvidesUiFeatureInBeforeAndAfter = libProvidesUiFeatureInBefore && libProvidesUiFeatureInAfter;
 
             // This determines whether Rx's UI features are available as a result of the references we
             // have. (Note that even when Rx's UI features are available to the app as a result of an
@@ -178,10 +290,8 @@ internal record Scenario(
             IEnumerable<RxUsageChoices> ForAppRxUsage(bool appUseRxNonUiFeatures, bool appUseRxUiFeatures)
             {
                 return
-                    from libOffersUi in uiAvailableToLibInBefore ? boolValues : boolJustFalse
-                    from appInvokesLibUi in (libOffersUi ? boolValues : boolJustFalse)
+                    from appInvokesLibUi in (libProvidesUiFeatureInBeforeAndAfter ? boolValues : boolJustFalse)
                     select new RxUsageChoices(
-                        LibraryWindowsTargetUsesRxUiFeatures: libOffersUi,
                         AppInvokesLibraryCodePathsUsingRxNonUiFeatures: libAvailableBeforeAndAfter,
                         AppInvokesLibraryCodePathsUsingRxUiFeatures: appInvokesLibUi,
                         AppUseRxNonUiFeaturesDirectly: appUseRxNonUiFeatures,
@@ -194,15 +304,6 @@ internal record Scenario(
                  from usageChoice in ForAppRxUsage(appUsesNonUiRxDirectly, appUseRxUiFeatures)
                  select usageChoice)
                  .ToArray();
-            ////[
-            ////    new(LibraryWindowsTargetUsesRxUiFeatures: false, AppInvokesLibraryCodePathsUsingRxUiFeatures: false, AppUseRxUiFeaturesDirectly: false),
-            ////    new(LibraryWindowsTargetUsesRxUiFeatures: true, AppInvokesLibraryCodePathsUsingRxUiFeatures: false, AppUseRxUiFeaturesDirectly: false),
-            ////    new(LibraryWindowsTargetUsesRxUiFeatures: true, AppInvokesLibraryCodePathsUsingRxUiFeatures: true, AppUseRxUiFeaturesDirectly: false),
-
-            ////    new(LibraryWindowsTargetUsesRxUiFeatures: false, AppInvokesLibraryCodePathsUsingRxUiFeatures: false, AppUseRxUiFeaturesDirectly: true),
-            ////    new(LibraryWindowsTargetUsesRxUiFeatures: true, AppInvokesLibraryCodePathsUsingRxUiFeatures: false, AppUseRxUiFeaturesDirectly: true),
-            ////    new(LibraryWindowsTargetUsesRxUiFeatures: true, AppInvokesLibraryCodePathsUsingRxUiFeatures: true, AppUseRxUiFeaturesDirectly: true),
-            ////];
         }
 
         bool ShouldTestDisableTransitiveFrameworksWorkaround(AppChoice appChoice)
@@ -222,7 +323,7 @@ internal record Scenario(
                 d.Match(
                     (DirectRxPackageReference rx) => rx.Match(
                         (OldRx _) => true,
-                        (NewRx n) => n.IncludeLegacyPackageWhereAvailable),
+                        (NewRx n) => n.LegacyPackageChoice is not NewRxLegacyOptions.JustMain),
                     (TransitiveRxReferenceViaLibrary t) => !t.ReferencesNewRxVersion);
 
             // Note that we are ignoring IncludeUiPackages because that means an explicit choice to do UI things,
@@ -232,12 +333,8 @@ internal record Scenario(
 
         return
             from appChoice in appChoices
-                //from appUsesNonUiRxDirectly in boolValues
-                //from rxUiUsage in rxUiUsages
             from rxUsage in GetRxUsages(appChoice)
             from disableTransitiveFrameworkReferences in (ShouldTestDisableTransitiveFrameworksWorkaround(appChoice) ? boolValues : [false])
-            let oldLibrary = new LibraryDetails("net8.0;net8.0-windows10.0.19041", false, rxUsage.LibraryWindowsTargetUsesRxUiFeatures)
-            let newLibrary = new LibraryDetails("net8.0;net8.0-windows10.0.19041", true, rxUsage.LibraryWindowsTargetUsesRxUiFeatures)
             select new Scenario(
                 ApplicationTfm: "net8.0-windows10.0.19041",
                 TfmsOfBeforeAndAfterLibrary: "net8.0;net8.0-windows10.0.19041",
@@ -255,23 +352,22 @@ internal record Scenario(
         RxDependency[] RxAfter);
 
     private record RxUsageChoices(
-        bool LibraryWindowsTargetUsesRxUiFeatures,
         bool AppInvokesLibraryCodePathsUsingRxNonUiFeatures,
         bool AppInvokesLibraryCodePathsUsingRxUiFeatures,
         bool AppUseRxNonUiFeaturesDirectly,
         bool AppUseRxUiFeaturesDirectly);
 }
 
-internal record AcquisitionAndIsOld(RxAcquiredVia Acquisition, bool ReferencesNewRxVersion);
-
-internal record LibraryDetails(
-    string Tfms,
-    bool ReferencesNewRxVersion,
-    bool HasWindowsTargetUsingUiFrameworkSpecificRxFeature);
-
 internal readonly record struct OldRx();
+
+internal enum NewRxLegacyOptions
+{
+    JustMain,
+    MainAndLegacy,
+    JustLegacy,
+}
 internal readonly record struct NewRx(
-    bool IncludeLegacyPackageWhereAvailable,
+    NewRxLegacyOptions LegacyPackageChoice,
     bool IncludeUiPackages);
 
 internal readonly record struct TransitiveRxReferenceViaLibrary(

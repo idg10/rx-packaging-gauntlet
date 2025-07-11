@@ -3,7 +3,6 @@
 using RxGauntlet.Build;
 using RxGauntlet.LogModel;
 
-using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace CheckTransitiveFrameworkReference;
@@ -40,13 +39,14 @@ internal class RunTransitiveFrameworkReferenceCheck(
         Scenario scenario)
     {
         Console.WriteLine(++_scenarioCounter);
-        // TODO: do we need to distinguish between this and whether we get our Rx reference transitively or directly? Or are
-        // we already handling that in the scenario variations?
-        //scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly
 
         PackageIdAndVersion[] newRxMainAndIfRequiredLegacyPackage =
             rxLegacyPackage is not null
                 ? [rxMainPackage, rxLegacyPackage]
+                : [rxMainPackage];
+        PackageIdAndVersion[] newRxLegacyPackageIfAvailableElseMain =
+            rxLegacyPackage is not null
+                ? [rxLegacyPackage]
                 : [rxMainPackage];
 
 
@@ -61,7 +61,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                 // match, because it presumes nobody would ever try to publish a new version of a package without
                 // changing the name.
                 // TODO: we don't currently have a direct way of simulating two different versions of the same package.
-                string packageVersion = $"1.0.0-preview{DateTime.UtcNow.ToString("yyyyddMMHHmmssff")}";
+                string packageVersion = $"1.0.0-preview{DateTime.UtcNow:yyyyddMMHHmmssff}";
                 string rxVersionPart = ld.ReferencesNewRxVersion ? "Old" : "New";
                 string tfmsNamePart = string.Join(".", ld.Tfms).Replace(";", ".");
                 bool hasWindowsTarget = ld.Tfms.Contains("-windows");
@@ -106,14 +106,10 @@ internal class RunTransitiveFrameworkReferenceCheck(
             }
         }
 
-        //(LibraryDetails? Details, RxAcquiredVia Aquisition)[] libs =
         RxDependency[] libs =
             [
                 ..scenario.RxDependenciesBefore,
                 ..scenario.RxDependenciesAfter,
-                //(scenario.BeforeLibrary, scenario.RxBefore),
-                //(scenario.AfterLibrary, scenario.RxUpgrade),
-                //(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter)
             ];
         foreach (RxDependency dependency in libs)
         {
@@ -127,20 +123,6 @@ internal class RunTransitiveFrameworkReferenceCheck(
         //PackageIdAndVersion[] GetPackage(LibraryDetails? ld, RxAcquiredVia acq, bool packageRefsIncludeLegacyPackageIfAvailable)
         PackageIdAndVersion[] GetPackage(RxDependency rxDependency)
         {
-            //return acq switch
-            //{
-            //    RxAcquiredVia.NoReference => [],
-            //    RxAcquiredVia.PackageTransitiveDependency => ld is not null
-            //        ? [builtLibPackages[ld]]
-            //        throw new InvalidOperationException($"{acq} requires library details"),
-            //    RxAcquiredVia.PackageReferenceInProject => ld is null
-            //    ? (isNew
-            //        ? (appExpectingToUseRxUiFeatures
-            //            ? [newRxMainAndIfRequiredLegacyPackage, .. rxUiPackages] : [newRxMainAndIfRequiredLegacyPackage])
-            //        : [OldRx])
-            //    : [builtLibPackages[ld]],
-            //        _ => throw new ArgumentException($"Unknown enum entry {acq}", nameof(acq))
-            //};
 
             return rxDependency.Match(GetPackageDirect, GetPackageTransitive);
 
@@ -155,9 +137,13 @@ internal class RunTransitiveFrameworkReferenceCheck(
                     (OldRx _) => [OldRx],
                     (NewRx newRx) =>
                     {
-                        PackageIdAndVersion[] rxMainRef = newRx.IncludeLegacyPackageWhereAvailable
-                            ? newRxMainAndIfRequiredLegacyPackage
-                            : [rxMainPackage];
+                        PackageIdAndVersion[] rxMainRef = newRx.LegacyPackageChoice switch
+                        {
+                            NewRxLegacyOptions.JustMain => [rxMainPackage],
+                            NewRxLegacyOptions.JustLegacy => newRxLegacyPackageIfAvailableElseMain,
+                            NewRxLegacyOptions.MainAndLegacy => newRxMainAndIfRequiredLegacyPackage,
+                            _ => throw new NotImplementedException(),
+                        };
                         return newRx.IncludeUiPackages
                             ? [.. rxMainRef, .. rxUiPackages]
                             : rxMainRef;
@@ -165,17 +151,8 @@ internal class RunTransitiveFrameworkReferenceCheck(
             }
         }
 
-        PackageIdAndVersion[] beforeLibraries = scenario.RxDependenciesBefore.SelectMany(dep => GetPackage(dep)).ToArray();
-        //[
-        //    ..GetPackage(scenario.BeforeLibrary, scenario.RxBefore, packageRefsIncludeLegacyPackageIfAvailable: false),
-        //    ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, packageRefsIncludeLegacyPackageIfAvailable: false),
-        //];
-
-        PackageIdAndVersion[] afterLibraries = scenario.RxDependenciesAfter.SelectMany(dep => GetPackage(dep)).ToArray();
-        //[
-        //        ..GetPackage(scenario.BeforeAndAfterLibrary, scenario.RxBeforeAndAfter, packageRefsIncludeLegacyPackageIfAvailable: true),
-        //        ..GetPackage(scenario.AfterLibrary, scenario.RxUpgrade, packageRefsIncludeLegacyPackageIfAvailable: true),
-        //    ];
+        PackageIdAndVersion[] beforeLibraries = scenario.RxDependenciesBefore.SelectMany(GetPackage).ToArray();
+        PackageIdAndVersion[] afterLibraries = scenario.RxDependenciesAfter.SelectMany(GetPackage).ToArray();
 
         async Task<BuildOutput> BuildApp(PackageIdAndVersion[] packageRefs, bool isAfter)
         {
@@ -281,8 +258,8 @@ internal class RunTransitiveFrameworkReferenceCheck(
     {
         return TestRunPartConfig.Create(
             directRefToOldRx: deps.Any(d => d.IsOldRx),
-            directRefToNewRxMain: deps.Any(d => d.IsNewRx),
-            directRefToNewRxLegacyFacade: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.IncludeLegacyPackageWhereAvailable),
+            directRefToNewRxMain: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.LegacyPackageChoice is not NewRxLegacyOptions.JustLegacy),
+            directRefToNewRxLegacyFacade: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.LegacyPackageChoice is not NewRxLegacyOptions.JustMain),
             directRefToNewRxUiPackages: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.IncludeUiPackages),
 
             transitiveRefToOldRx: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
