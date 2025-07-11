@@ -101,7 +101,7 @@ public class RxSourceSettings : CommandSettings
             throw new InvalidOperationException($"{nameof(RxUiFrameworkPackages)}  must not be null.");
         }
 
-        if (!PackageIdAndVersion.TryParse(this.RxMainPackage, out _parsedRxMainPackage))
+        if (!PackageIdAndVersion.TryParse(rxMainPackage, out _parsedRxMainPackage))
         {
             return ValidationResult.Error($"Invalid package specification: {this.RxMainPackage}. Must be <PackageId>,<Version>");
         }

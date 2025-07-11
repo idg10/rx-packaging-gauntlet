@@ -12,7 +12,7 @@ namespace PlugIn.HostDriver;
 /// and deletes them when it is disposed.
 /// </para>
 /// </remarks>
-public class PlugInBuilder : IDisposable
+public sealed class PlugInBuilder : IDisposable
 {
     private const string PlugInTempFolderName = "PlugInHost";
     private static readonly string PlugInTemplateProjectFolder = 
@@ -59,7 +59,7 @@ public class PlugInBuilder : IDisposable
 
     private record GeneratedProject(ModifiedProjectClone Project, string AssemblyName);
 
-    private async Task<GeneratedProject> CreateProjectForPlugIn(PlugInDescriptor plugInDescriptor)
+    private static async Task<GeneratedProject> CreateProjectForPlugIn(PlugInDescriptor plugInDescriptor)
     {
         // Give each distinct framework/rx version a different assembly name, because the
         // .NET Fx plug-in host will only ever load the first assembly with any particular name.

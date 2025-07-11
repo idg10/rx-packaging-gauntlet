@@ -77,7 +77,7 @@ public class ProjectFileRewriter
     {
         if (useWpf.HasValue || useWindowsForms.HasValue)
         {
-            List<KeyValuePair<string, string>> useUiFrameworksProperties = new();
+            List<KeyValuePair<string, string>> useUiFrameworksProperties = [];
 
             if (useWpf.HasValue)
             {
@@ -98,7 +98,7 @@ public class ProjectFileRewriter
         document.Save(destinationPath);
     }
 
-    private void ReplaceNodeWithPackageReferences(
+    private static void ReplaceNodeWithPackageReferences(
         XmlNode nodeToReplace,
         PackageIdAndVersion[] replacementPackages)
     {

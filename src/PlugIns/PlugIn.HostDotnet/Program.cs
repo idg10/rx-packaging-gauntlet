@@ -17,7 +17,7 @@ if (result1 is null || result2 is null)
     return 1;
 }
 
-HostOutput result = new HostOutput
+HostOutput result = new()
 {
     FirstPlugIn = result1,
     SecondPlugIn = result2

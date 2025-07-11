@@ -4,7 +4,7 @@ using PlugIn.HostSerialization;
 using System;
 using System.Reflection;
 
-namespace PlugInHostNetFx481
+namespace PlugIn.HostNetFx
 {
     internal class Program
     {
@@ -40,7 +40,7 @@ namespace PlugInHostNetFx481
                 return 1;
             }
 
-            HostOutput result = new HostOutput
+            HostOutput result = new()
             {
                 FirstPlugIn = result1,
                 SecondPlugIn = result2

@@ -131,7 +131,7 @@ internal class PlugInTargetSelection
         // However the brute-force approach, in which we just try every TFM we are considering
         // and ask the NuGet library which Rx target it would select, seems to work well enough.
 
-        List<Scenario> results = new();
+        List<Scenario> results = [];
         foreach (string hostRuntimeTfm in hostRuntimes)
         {
             // Assuming we're running on a supported version of Windows 11 or later. This ensures that when we get to

@@ -1,4 +1,7 @@
-﻿using OneOf;
+﻿
+#pragma warning disable IDE0350 // Use implicitly typed lambda - in OneOf matches, it's typically easier to understand with explicit parameter types
+
+using OneOf;
 
 namespace CheckTransitiveFrameworkReference;
 

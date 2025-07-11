@@ -27,7 +27,7 @@ public sealed class ModifiedProjectClone : IDisposable
 
         Directory.CreateDirectory(copyPath);
 
-        ModifiedProjectClone? clone = new ModifiedProjectClone(copyPath);
+        ModifiedProjectClone clone = new(copyPath);
         try
         {
             foreach (string file in Directory.GetFiles(sourceProjectFolder))

@@ -1,4 +1,7 @@
-﻿using NodaTime;
+﻿
+#pragma warning disable IDE0350 // Use implicitly typed lambda - in OneOf matches, it's typically easier to understand with explicit parameter types
+
+using NodaTime;
 
 using RxGauntlet.Build;
 using RxGauntlet.LogModel;

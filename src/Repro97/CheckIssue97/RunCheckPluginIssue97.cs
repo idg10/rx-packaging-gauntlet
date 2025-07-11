@@ -23,8 +23,8 @@ internal class RunCheckPluginIssue97
             Console.WriteLine(scenario);
 
             string hostRuntimeTfm = scenario.HostTfm;
-            PlugInDescriptor firstPlugIn = scenario.firstPlugIn;
-            PlugInDescriptor secondPlugIn = scenario.secondPlugIn;
+            PlugInDescriptor firstPlugIn = scenario.FirstPlugIn;
+            PlugInDescriptor secondPlugIn = scenario.SecondPlugIn;
 
             HostOutput output = await plugInHost.Run(
                 hostRuntimeTfm,
@@ -53,8 +53,8 @@ internal class RunCheckPluginIssue97
             var result = Issue97TestRun.Create(
                 Issue97TestRunConfig.Create(
                     hostTfm: scenario.HostTfm,
-                    plugIn1: PlugInDescriptorToDetails(scenario.firstPlugIn),
-                    plugIn2: PlugInDescriptorToDetails(scenario.secondPlugIn),
+                    plugIn1: PlugInDescriptorToDetails(scenario.FirstPlugIn),
+                    plugIn2: PlugInDescriptorToDetails(scenario.SecondPlugIn),
                     rxVersion: NuGetPackage.Create(packages[0].PackageId, packages[0].Version)),
                 testRunDateTime: testRunDateTime,
                 testRunId: testRunId,
