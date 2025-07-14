@@ -33,7 +33,7 @@ For the purposes of the bloat issue, we need to keep in mind that the most commo
 
 Another important scenario to consider is when an application developer hasn't chosen to upgrade to the latest version of Rx.NET (e.g., because the 'bloat' issue didn't cause any problems for their scenario, and they are OK with how things work right now), but ends up getting that update anyway because of a transitive reference. If the application has just a single transitive dependendency on Rx.NET, and doesn't directly use Rx.NET itself, the application developer typically won't even notice the change. But in cases where there are two dependency chains referring to Rx.NET, we can end up with two different Rx.NET versions. Some solutions to the bloat problem can have problems with this.
 
-For example, consider an application which currently has this tree of pacakge dependencies:
+For example, consider an application which currently has this tree of package dependencies:
 
 * `MyApplication`
   * `LibA` v1.0.0

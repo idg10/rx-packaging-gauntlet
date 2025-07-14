@@ -16,4 +16,8 @@
     <ProjectReference Include="..\RxGauntlet.Common\RxGauntlet.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Check.Specs" />
+  </ItemGroup>
+
 </Project>

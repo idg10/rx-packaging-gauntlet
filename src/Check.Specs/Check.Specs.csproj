@@ -18,4 +18,8 @@
     <Folder Include="Support\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CheckTransitiveFrameworkReference\CheckTransitiveFrameworkReference.csproj" />
+  </ItemGroup>
+
 </Project>
