@@ -1,23 +1,19 @@
-Feature: Upgrading when Rx dependency acquired through a transitive reference
+Feature: Upgrading direct Rx dependency when old dependency also exists through a transitive reference
 
 Background:
-    Given I get all the App Dependency combinations for upgrading an old Rx reference acquired transitively
+    Given I get all the App Dependency combinations for upgrading a direct old Rx reference when an old transitive reference also exists
 
 
-# This corresponds to an application that had happily (perhaps obliviously) been using a package
-# that depends on Rx 6, and the app developer now decides to use Rx in the main app, and adds a
-# reference to the new main rx package.
-# TODO: If System.Reactive is relegated to a legacy facade, we expect this to cause build
-#   errors if the main app tries to use Rx directly, because there are now two versions of
-#   Rx available: the old via System.Reactive v6, and the new via System.Reactive.Net v7.
-#  (Even though the main app had no direct package reference to Rx, it may still have been
-#  using it because the developer may just have been relying on the implicit reference.)
-# TODO: Hopefully we'll be able to emit a build message suggesting that they want to add a
-#   reference to the new System.Reactive (which will resolve the build error).
-Scenario: Upgrade transitive ref by adding a reference to new main Rx package
+# This corresponds to an application that had happily been Rx 6 directly, and was also
+# (possibly oblibiously) using a package that depends on Rx 6,. Having discovered that
+# System.Reactive is now deprecated, the app developer replaces the System.Reactive v6
+# reference with a reference to the new main rx package.
+# TODO: work out what errors/diagnostics we might expect.
+Scenario: Upgrade as reference to new main Rx package
     Given only the combinations where Before App Dependencies are exactly
         | Dependency    |
         | LibUsingOldRx |
+        | OldRx         |
     And only the combinations where After App Dependencies are exactly
         | Dependency    |
         | LibUsingOldRx |
@@ -40,16 +36,19 @@ Scenario: Upgrade transitive ref by adding a reference to new main Rx package
 #   Scenarios should express expectation around 'two Rx versions' scenario
 
 
-# This corresponds to a situation where an application had been using a package that depends on
-# Rx 6, and wants to upgrade it to use the latest Rx (either because they're getting a
-# deprecation warning from the NuGet package manager, or because they are trying to get rid of
-# bloat) but doesn't add a reference to the main version.
-# TODO: We won't expect build errors with this.
-# TODO: We do expect NuGet to identify this as a deprecated package.
-Scenario: Upgrade transitive ref by adding a reference to new Rx legacy package
+# This corresponds to an application that had happily been Rx 6 directly, and was also
+# (possibly oblibiously) using a package that depends on Rx 6, but the developer wants
+# to upgrade it to use the latest Rx (either because they're getting a deprecation
+# warning from the NuGet package manager, or because they are trying to get rid of
+# bloat). Unlike the preceding scenario, in which they replace the package reference with
+# one to the new main package (which is normally what we'll want people do to), in this case
+# they just upgrade to the latest System.Reactive.
+# TODO: work out what errors/diagnostics we might expect.
+Scenario: Upgrade as reference to new Rx legacy package
     Given only the combinations where Before App Dependencies are exactly
         | Dependency    |
         | LibUsingOldRx |
+        | OldRx         |
     And only the combinations where After App Dependencies are exactly
         | Dependency        |
         | LibUsingOldRx     |
@@ -63,14 +62,21 @@ Scenario: Upgrade transitive ref by adding a reference to new Rx legacy package
     #And all matching scenarios expect library code to get main Rx types from 'NewRxMain' 
     #And all matching scenarios expect library code to get UI Rx types from 'NewRxLegacyFacade'
 
-# This is the 'Add references to both' version, which will typically correspond to what an app
-# developer does next after trying the 'Just add a reference to new main Rx package' version and
-# getting a build error.
-# TODO: We won't expect build errors with this.
+# This corresponds to an application that had happily been Rx 6 directly, and was also
+# (possibly oblibiously) using a package that depends on Rx 6, but the developer wants
+# to upgrade it to use the latest Rx (either because they're getting a deprecation
+# warning from the NuGet package manager, or because they are trying to get rid of
+# bloat). In this case, they upgrade the existing System.Reactive reference *and* add a
+# reference to the new main Rx package. The might have ended up in this situation because
+# they initially tried replacing System.Reactive with the latest main package, but ran into
+# the two-Rx-versions problem, and the Rx package generated a message suggesting they also
+# add the System.Reactive package.
+# TODO: work out what errors/diagnostics we might expect.
 Scenario: Upgrade transitive ref by adding references to new Rx main and legacy packages
     Given only the combinations where Before App Dependencies are exactly
         | Dependency    |
         | LibUsingOldRx |
+        | OldRx         |
     And only the combinations where After App Dependencies are exactly
         | Dependency        |
         | LibUsingOldRx     |
