@@ -91,31 +91,41 @@ internal class PlugInTargetSelection
         var repository = Repository.Factory.GetCoreV3(source);
         var resource = await repository.GetResourceAsync<FindPackageByIdResource>();
 
-        using var packageStream = new MemoryStream();
-        if (!await resource.CopyNupkgToStreamAsync(
-            mainPackageId, new NuGetVersion(mainPackageVersion), packageStream, cache, logger, CancellationToken.None))
+        // We're now going to work out which target frameworks we could build the plug-in for, given
+        // the frameworks supported by the Rx version we've got. In cases where there's a single package,
+        // it's straightforward, but when we have multiple packages, typically the UI packages support
+        // a narrower set.
+        Dictionary<PackageIdAndVersion, List<NuGetFramework>> frameworksByPackage = new();
+        foreach (PackageIdAndVersion package in packages)
         {
-            throw new InvalidOperationException($"Could not download {mainPackageId} {mainPackageVersion} from {source}");
+            using var packageStream = new MemoryStream();
+            if (!await resource.CopyNupkgToStreamAsync(
+                package.PackageId, new NuGetVersion(package.Version), packageStream, cache, logger, CancellationToken.None))
+            {
+                throw new InvalidOperationException($"Could not download {mainPackageId} {mainPackageVersion} from {source}");
+            }
+
+            packageStream.Position = 0;
+            using var reader = new PackageArchiveReader(packageStream);
+
+            // Some packages (e.g. System.Reactive.Linq 3.0.0) report file entries for what should be folders.
+            // For example, we get lib/netstandard1.0/, which is a zero-length file. I think something went
+            // wrong when the package was created back in 2016, because these should not be files. (There are files
+            // inside these folders, such as lib/netstandard1.0/System.Reactive.Linq.dll, but the parent folder
+            // itself really shouldn't be reported as a file.) It does not report any such bogus entries for
+            // the other target frameworks - this just seems to afflict the netstandard targets.
+            // These cause PackageArchiveReader to report these as belonging to an 'Any' framework, which
+            // does not accurately represent what the package actually offers, so we strip these out.
+            IEnumerable<FrameworkSpecificGroup> libItemsExcludingBogusFolderEntries = reader.GetLibItems()
+                .Where(x => x.Items.All(item => item.Split('/') is [.., string final] && final.Length > 0));
+            List<NuGetFramework> packageFrameworks = libItemsExcludingBogusFolderEntries
+                .Select(x => x.TargetFramework)
+                .Where(fx => fx is not null)
+                .Distinct()
+                .ToList();
+
+            frameworksByPackage.Add(package, packageFrameworks);
         }
-
-        packageStream.Position = 0;
-        using var reader = new PackageArchiveReader(packageStream);
-
-        // Some packages (e.g. System.Reactive.Linq 3.0.0) report file entries for what should be folders.
-        // For example, we get lib/netstandard1.0/, which is a zero-length file. I think something went
-        // wrong when the package was created back in 2016, because these should not be files. (There are files
-        // inside these folders, such as lib/netstandard1.0/System.Reactive.Linq.dll, but the parent folder
-        // itself really shouldn't be reported as a file.) It does not report any such bogus entries for
-        // the other target frameworks - this just seems to afflict the netstandard targets.
-        // These cause PackageArchiveReader to report these as belonging to an 'Any' framework, which
-        // does not accurately represent what the package actually offers, so we strip these out.
-        IEnumerable<FrameworkSpecificGroup> libItemsExcludingBogusFolderEntries = reader.GetLibItems()
-            .Where(x => x.Items.All(item => item.Split('/') is [.., string final] && final.Length > 0));
-        List<NuGetFramework> frameworks = libItemsExcludingBogusFolderEntries
-            .Select(x => x.TargetFramework)
-            .Where(fx => fx is not null)
-            .Distinct()
-            .ToList();
 
         var reducer = new FrameworkReducer();
 
@@ -151,10 +161,23 @@ internal class PlugInTargetSelection
             var plugInTfmsWithNearestRxMatch = plugInTfmsCompatibleWithHostRuntime
                 .SelectMany(plugInFramework =>
                 {
+                    // The code below seems to do what we want, but I think that's partly by luck.
+                    // I think the correct logic at this point is to ask:
+                    //  for each package, what are all the targets that this plugInFramework could consume?
+                    //  disregard any of those targets with which not all packages are compatible
+                    //  of the remaining targets, pick 'nearest' for the plugInFramework
+
+                    var nearestAvailableFrameworksAcrossAllPackages = frameworksByPackage.Values
+                        .Select(fs => reducer.GetNearest(plugInFramework, fs))
+                        .OfType<NuGetFramework>()
+                        .Distinct();
                     // If the plug-in TFM is compatible with the host runtime, we can determine which Rx target it will select.
-                    (NuGetFramework PluginTfm, string RxTfm)[] result = reducer.GetNearest(plugInFramework, frameworks) is NuGetFramework selectedRxTarget
-                        ? [(plugInFramework, selectedRxTarget.GetShortFolderName())]
-                        : [];
+                    (NuGetFramework PluginTfm, string RxTfm)[] result =
+                        (reducer.GetNearest(plugInFramework, nearestAvailableFrameworksAcrossAllPackages) is NuGetFramework selectedRxTarget &&
+                         frameworksByPackage.Values.All(
+                                frameworks => reducer.GetNearest(plugInFramework, frameworks) is not null))
+                            ? [(plugInFramework, selectedRxTarget.GetShortFolderName())]
+                            : [];
 
                     return result;
                 });
@@ -186,7 +209,9 @@ internal class PlugInTargetSelection
                 // versions that have this characteristic may become invisible when we load the results into analytics
                 // tooling. Using the absence of data to signify that a problem isn't possible can be tricky to deal
                 // with when it comes to visualizing the results. So in cases like this, we pick two TFMs, even
-                // though we know that they will correctly resolve to the same Rx target.
+                // though we know that they will correctly resolve to the same Rx target. (There might not actually be
+                // two such TFM - with the latest versions of Rx running on a net472 host, net472 is likely the only
+                // TFM. But we should still pick up two options when running on a net481 host.)
                 selectedPlugInTfms.AddRange(plugInTfmsBySelectedRxTarget.Values.Single()
                     .Take(2)
                     .Select(f => f.GetShortFolderName()));

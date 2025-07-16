@@ -3,6 +3,14 @@
     "Preview": {
       "commandName": "Project",
       "commandLineArgs": "--rx-main-package System.Reactive.Net,7.0.0-preview.17.g58342773bd --rx-legacy-package System.Reactive,7.0.0-preview.17.g58342773bd --rx-ui-package System.Reactive.For.Wpf,7.0.0-preview.17.g58342773bd --rx-ui-package System.Reactive.For.WindowsForms,7.0.0-preview.17.g58342773bd --package-source https://pkgs.dev.azure.com/dotnet/Rx.NET/_packaging/RxNet/nuget/v3/index.json"
+    },
+    "Facade": {
+      "commandName": "Project",
+      "commandLineArgs": "--rx-main-package System.Reactive.Net,7.0.0-preview-legacyfacade.1.ga1159cd7f3 --rx-legacy-package System.Reactive,7.0.0-preview-legacyfacade.1.ga1159cd7f3 --rx-ui-package System.Reactive.For.Wpf,7.0.0-preview-legacyfacade.1.ga1159cd7f3 --rx-ui-package System.Reactive.For.WindowsForms,7.0.0-preview-legacyfacade.1.ga1159cd7f3 --package-source https://pkgs.dev.azure.com/dotnet/Rx.NET/_packaging/RxNet/nuget/v3/index.json"
+    },
+    "FacadeRefNoUi": {
+      "commandName": "Project",
+      "commandLineArgs": "--rx-main-package System.Reactive.Net,7.0.0-preview-legacyfacade-refnoui.1.g8df98cb6a9 --rx-legacy-package System.Reactive,7.0.0-preview-legacyfacade-refnoui.1.g8df98cb6a9 --rx-ui-package System.Reactive.For.Wpf,7.0.0-preview-legacyfacade-refnoui.1.g8df98cb6a9 --rx-ui-package System.Reactive.For.WindowsForms,7.0.0-preview-legacyfacade-refnoui.1.g8df98cb6a9 --package-source https://pkgs.dev.azure.com/dotnet/Rx.NET/_packaging/RxNet/nuget/v3/index.json"
     }
   }
 }

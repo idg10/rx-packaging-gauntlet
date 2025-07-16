@@ -60,6 +60,8 @@ internal class RunGauntlet(
             typeAndPackageSelection.PackageSelection.RxUiPackages.Select(package =>
                 $"--rx-package {package.PackageId},{package.Version} " +
                 $""));
+
+        uiPackageArguments = uiPackageArguments == "" ? "" : " " + uiPackageArguments; // Add space where necessary
         PackageIdAndVersion mainRxPackage = typeAndPackageSelection.PackageSelection.MainRxPackage;
         string packageArguments = $"--rx-main-package {mainRxPackage.PackageId},{mainRxPackage.Version}{uiPackageArguments}";
         packageArguments = typeAndPackageSelection.PackageSelection.LegacyRxPackage is PackageIdAndVersion legacyRxPackage
