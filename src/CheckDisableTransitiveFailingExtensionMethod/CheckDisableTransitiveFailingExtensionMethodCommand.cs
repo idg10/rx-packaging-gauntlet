@@ -106,7 +106,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
                 }
                 return ExtensionMethodsWorkaroundTestRun.Create(
                     config: config,
-                    buildSucceeded: buildResult.Succeeded,
+                    buildSucceeded: buildResult.BuildSucceeded,
                     deployedWindowsForms: includesWindowsForms,
                     deployedWpf: includesWpf,
                     testRunDateTime: testDetails.TestRunDateTime,

@@ -100,4 +100,13 @@ public sealed class ComponentBuilder(string appBuildTempFolderName) : IDisposabl
             Directory.Delete(LocalNuGetPackageFolderPath, true);
         }
     }
+
+    public async Task DeleteBuiltAppNowAsync(BuildAndRunOutput beforeBuildResult)
+    {
+        var p = _projectClones.Single(c => beforeBuildResult.OutputFolder.StartsWith(c.ClonedProjectFolderPath));
+        if (Directory.Exists(p.ClonedProjectFolderPath))
+        {
+            await Task.Run(() => Directory.Delete(p.ClonedProjectFolderPath));
+        }
+    }
 }

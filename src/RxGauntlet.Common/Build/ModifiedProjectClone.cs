@@ -27,7 +27,7 @@ public sealed class ModifiedProjectClone : IDisposable
 
         Directory.CreateDirectory(copyPath);
 
-        ModifiedProjectClone clone = new(copyPath);
+        ModifiedProjectClone? clone = new(copyPath);
         try
         {
             foreach (string file in Directory.GetFiles(sourceProjectFolder))
@@ -122,6 +122,7 @@ public sealed class ModifiedProjectClone : IDisposable
         {
             FileName = "dotnet",
             UseShellExecute = false,
+            RedirectStandardOutput = true,
 
             // Comment this out to see the output in the console window
             //CreateNoWindow = true,
@@ -131,10 +132,25 @@ public sealed class ModifiedProjectClone : IDisposable
 
         using var process = new Process { StartInfo = startInfo };
         process.Start();
-        await process.WaitForExitAsync();
+        Task<string> stdOutTask = Task.Run(process.StandardOutput.ReadToEndAsync);
+        Task processTask = process.WaitForExitAsync();
+        Task firstToFinish = await Task.WhenAny(processTask, stdOutTask);
 
-        Console.WriteLine($"dotnet exit code: {process.ExitCode}");
+        if (!stdOutTask.IsCompleted)
+        {
+            // The process finished, but the standard output task is still running. It's possible that
+            // it is nearly done, so give it some time.
+            await Task.WhenAny(stdOutTask, Task.Delay(2000));
+        }
+
+        if (!stdOutTask.IsCompleted)
+        {
+            throw new InvalidOperationException("Did not get output from program");
+        }
+        string stdOut = await stdOutTask;
+
+        await processTask;
         string outputFolder = Path.Combine(ClonedProjectFolderPath, "bin", "Release");
-        return new BuildOutput(process.ExitCode, outputFolder);
+        return new BuildOutput(process.ExitCode, outputFolder, stdOut);
     }
 }

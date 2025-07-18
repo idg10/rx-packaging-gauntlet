@@ -30,6 +30,7 @@
       "description": "The bloat results pre-upgrade.",
       "allOf": [
         { "$ref": "./CommonSchema.json#/$defs/buildResults" },
+        { "$ref": "./CommonSchema.json#/$defs/executionResults" },
         { "$ref": "./CommonSchema.json#/$defs/bloatTestResults" }
       ]
     },
@@ -78,6 +79,8 @@
         "transitiveRefToNewRxUiPackages": { "type": "boolean" },
         "transitiveRefUsesRxUiFeatures": { "type": "boolean" },
 
+        "useWpf": { "type": "boolean" },
+        "useWindowsForms": { "type": "boolean" },
         "disableTransitiveFrameworkReferences": { "type": "boolean" }
       },
       "required": [
@@ -92,6 +95,8 @@
         "transitiveRefToNewRxUiPackages",
         "transitiveRefUsesRxUiFeatures",
 
+        "useWpf",
+        "useWindowsForms",
         "disableTransitiveFrameworkReferences"
       ]
     }

@@ -100,7 +100,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                     },
                     additionalPackageSources);
 
-                if (!packageBuildResult.Succeeded)
+                if (!packageBuildResult.BuildSucceeded)
                 {
                     throw new InvalidOperationException("Unexpected failure when building NuGet package to be consumed by test app");
                 }
@@ -157,7 +157,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
         PackageIdAndVersion[] beforeLibraries = scenario.RxDependenciesBefore.SelectMany(GetPackage).ToArray();
         PackageIdAndVersion[] afterLibraries = scenario.RxDependenciesAfter.SelectMany(GetPackage).ToArray();
 
-        async Task<BuildOutput> BuildApp(PackageIdAndVersion[] packageRefs, bool isAfter)
+        async Task<BuildAndRunOutput> BuildApp(PackageIdAndVersion[] packageRefs, bool isAfter)
         {
             // Note that the ComponentBuilder automatically adds the dynamically created package source
             // (which contains any packages just built with _componentBuilder.BuildLocalNuGetPackageAsync)
@@ -173,6 +173,12 @@ internal class RunTransitiveFrameworkReferenceCheck(
                     if (isAfter && scenario.DisableTransitiveFrameworkReferencesAfter)
                     {
                         project.AddPropertyGroup([new("DisableTransitiveFrameworkReferences", "True")]);
+                    }
+
+                    if ((!isAfter && scenario.UseWpfAndWindowsFormsBefore) ||
+                        (isAfter && scenario.UseWpfAndWindowsFormsAfter))
+                    {
+                        project.AddPropertyGroup([new("UseWPF", "True"), new("UseWindowsForms", "True")]);
                     }
 
                     // Currently this is the only flag using _ScenarioDefineConstants,
@@ -206,49 +212,110 @@ internal class RunTransitiveFrameworkReferenceCheck(
                 },
                 additionalPackageSources);
 
-            if (r.Succeeded)
+            int? runExitCode = null;
+            string? runStdOut = null;
+            string? runStdErr = null;
+            if (r.BuildSucceeded)
             {
                 // TODO: do we actually want to run the app?
                 ProcessStartInfo startInfo = new()
                 {
                     FileName = Path.Combine(r.OutputFolder, scenario.ApplicationTfm, "win-x64", "Transitive.App.exe"),
-                    UseShellExecute = false
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
                 };
                 using (var process = new Process { StartInfo = startInfo })
                 {
                     process.Start();
-                    await process.WaitForExitAsync();
+
+                    // TODO: we have 3 versions of this stdout handling now. 1: centralise. 2: work out
+                    // if we really need this extra time to complete stdout handling.
+                    Task<string> stdOutTask = Task.Run(process.StandardOutput.ReadToEndAsync);
+                    Task<string> stdErrTask = Task.Run(process.StandardError.ReadToEndAsync);
+                    Task processTask = process.WaitForExitAsync();
+                    Task firstToFinish = await Task.WhenAny(processTask, stdOutTask, stdErrTask);
+
+                    if (!stdOutTask.IsCompleted)
+                    {
+                        // The process finished, but the standard output task is still running. It's possible that
+                        // it is nearly done, so give it some time.
+                        await Task.WhenAny(stdOutTask, Task.Delay(2000));
+                    }
+                    if (!stdErrTask.IsCompleted)
+                    {
+                        await Task.WhenAny(stdErrTask, Task.Delay(2000));
+                    }
+
+                    if (!stdOutTask.IsCompleted)
+                    {
+                        throw new InvalidOperationException("Did not get output from program");
+                    }
+
+                    if (!stdErrTask.IsCompleted)
+                    {
+                        throw new InvalidOperationException("Did not get error output from program");
+                    }
+                    runStdOut = await stdOutTask;
+                    runStdErr = await stdErrTask;
+
+                    await processTask;
+                    runExitCode = process.ExitCode;
                 }
             }
             else
             {
                 Debugger.Break();
             }
-            return r;
+            return new(r.BuildProcessExitCode, r.OutputFolder, r.BuildStdOut, runExitCode, runStdOut, runStdErr);
         }
 
         // TODO: we will actually build two apps: before and after upgrade.
-        BuildOutput beforeBuildResult = await BuildApp(beforeLibraries, isAfter: false);
-        BuildOutput afterBuildResult = await BuildApp(afterLibraries, isAfter: true);
+        BuildAndRunOutput beforeBuildResult = await BuildApp(beforeLibraries, isAfter: false);
+        BuildAndRunOutput afterBuildResult = await BuildApp(afterLibraries, isAfter: true);
 
-        (bool deployedWindowsForms, bool deployedWpf) = beforeBuildResult.CheckForUiComponentsInOutput();
-        var beforeResult = TransitiveFrameworkReferenceTestPartResult.Create(
-            buildSucceeded: beforeBuildResult.Succeeded,
-            deployedWindowsForms: deployedWindowsForms,
-            deployedWpf: deployedWpf);
-        (deployedWindowsForms, deployedWpf) = afterBuildResult.CheckForUiComponentsInOutput();
-        var afterResult = TransitiveFrameworkReferenceTestPartResult.Create(
-            buildSucceeded: afterBuildResult.Succeeded,
-            deployedWindowsForms: deployedWindowsForms,
-            deployedWpf: deployedWpf);
+        await _componentBuilder.DeleteBuiltAppNowAsync(beforeBuildResult);
+        await _componentBuilder.DeleteBuiltAppNowAsync(afterBuildResult);
+
+        TransitiveFrameworkReferenceTestPartResult MakePartResult(BuildAndRunOutput buildAndRunOutput)
+        {
+            (bool deployedWindowsForms, bool deployedWpf) = beforeBuildResult.CheckForUiComponentsInOutput();
+            var r = TransitiveFrameworkReferenceTestPartResult.Create(
+                buildSucceeded: buildAndRunOutput.BuildSucceeded,
+                executionExitCode: buildAndRunOutput.ExecuteExitCode,
+                deployedWindowsForms: deployedWindowsForms,
+                deployedWpf: deployedWpf);
+
+            if (!buildAndRunOutput.BuildSucceeded)
+            {
+                r = r.WithBuildStdOut(buildAndRunOutput.BuildStdOut);
+            }
+
+            if (buildAndRunOutput.ExecuteExitCode is int exit && exit != 0)
+            {
+                if (buildAndRunOutput.ExecuteStdOut is string execStdOut)
+                {
+                    r = r.WithExecutionStdOut(execStdOut);
+                }
+                if (buildAndRunOutput.ExecuteStdErr is string execStdErr)
+                {
+                    r = r.WithExecutionStdOut(execStdErr);
+                }
+            }
+
+            return r;
+        }
+
+        var beforeResult = MakePartResult(beforeBuildResult);
+        var afterResult = MakePartResult(afterBuildResult);
         var config = TransitiveFrameworkReferenceTestRunConfig.Create(
             rxVersion: NuGetPackage.Create(rxMainPackage.PackageId, rxMainPackage.Version),
             appUsesRxNonUiDirectly: scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly,
             appUsesRxUiDirectly: scenario.AppHasCodeUsingUiFrameworkSpecificRxDirectly,
             appUsesRxNonUiViaLibrary: scenario.AppInvokesLibraryMethodThatUsesNonUiFrameworkSpecificRxFeature,
             appUsesRxUiViaLibrary: scenario.AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature,
-            before: MakeConfig(scenario.RxDependenciesBefore, false),
-            after: MakeConfig(scenario.RxDependenciesAfter, scenario.DisableTransitiveFrameworkReferencesAfter));
+            before: MakeConfig(scenario.RxDependenciesBefore, false, scenario.UseWpfAndWindowsFormsBefore),
+            after: MakeConfig(scenario.RxDependenciesAfter, scenario.DisableTransitiveFrameworkReferencesAfter, scenario.UseWpfAndWindowsFormsAfter));
         return TransitiveFrameworkReferenceTestRun.Create(
             testRunId: testRunId,
             testRunDateTime: testRunDateTime,
@@ -257,7 +324,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
             resultsAfter: afterResult);
     }
 
-    private static TestRunPartConfig MakeConfig(RxDependency[] deps, bool disableTransitiveFrameworkReferences)
+    private static TestRunPartConfig MakeConfig(RxDependency[] deps, bool disableTransitiveFrameworkReferences, bool useWpfAndWindowsForms)
     {
         return TestRunPartConfig.Create(
             directRefToOldRx: deps.Any(d => d.IsOldRx),
@@ -277,6 +344,8 @@ internal class RunTransitiveFrameworkReferenceCheck(
             transitiveRefUsesRxUiFeatures: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
                 out TransitiveRxReferenceViaLibrary tr) && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature),
 
+            useWpf: useWpfAndWindowsForms,
+            useWindowsForms: useWpfAndWindowsForms,
             disableTransitiveFrameworkReferences: disableTransitiveFrameworkReferences);
     }
 }

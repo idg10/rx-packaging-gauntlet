@@ -1,5 +1,8 @@
 ﻿using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
+#if UseNonUiFrameworkRx
+using System.Windows.Threading;
+#endif
 
 namespace Transitive.Lib.UsesRx;
 
@@ -9,6 +12,10 @@ public static class RxLib
     public static IDisposable UseRxWpf(Action callme)
     {
         Console.WriteLine("RxLib.UseRxWpf enter");
+
+        // This creates a Dispatcher for this thread.
+        _ = Dispatcher.CurrentDispatcher;
+
         Console.WriteLine($"Rx WPF (via lib): {typeof(DispatcherScheduler).Assembly.FullName}");
         IDisposable result = DispatcherScheduler.Current.Schedule(
             default(object),
@@ -17,6 +24,11 @@ public static class RxLib
                 callme();
                 return Disposable.Empty;
             });
+
+        Console.WriteLine("Draining message loop after Schedule");
+        Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
+        Dispatcher.Run();
+
         Console.WriteLine("RxLib.UseRxWpf exit");
         return result;
     }

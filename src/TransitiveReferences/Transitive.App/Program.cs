@@ -3,7 +3,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 #endif
 
-#if InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature || UseUiFrameworkSpecificRxDirectly
+#if UseUiFrameworkSpecificRxDirectly
 using System.Windows.Threading;
 #endif
 
@@ -49,15 +49,9 @@ internal class Program
 #endif
 
 #if InvokeLibraryMethodThatUsesUiFrameworkSpecificRxFeature
-        // This creates a Dispatcher for this thread.
-        _ = Dispatcher.CurrentDispatcher;
-
         Console.WriteLine();
         Console.WriteLine("RxLib UI start");
         RxLib.UseRxWpf(() => {  Console.WriteLine("Callback from RxLib.UseRxWpf"); });
-        Console.WriteLine("Draining message loop after RxLib.UseRxWpf");
-        Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
-        Dispatcher.Run();
         Console.WriteLine("RxLib UI end");
 #endif
     }

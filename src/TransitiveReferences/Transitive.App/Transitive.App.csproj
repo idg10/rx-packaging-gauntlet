@@ -31,6 +31,29 @@
     <DefineConstants>$(DefineConstants);$(_ScenarioWindowsDefineConstants)</DefineConstants>
   </PropertyGroup>
 
+  <Target Name="_SetWpfDefineConstant" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <_WindowsDesktopFrameworkReference Include="@(FrameworkReference)"
+                                                   Condition="'%(Identity)' == 'Microsoft.WindowsDesktop.App' Or
+                                                              '%(Identity)' == 'Microsoft.WindowsDesktop.App.WPF' Or
+                                                              '%(Identity)' == 'Microsoft.WindowsDesktop.App.WindowsForms'" />
+    </ItemGroup>
+    <PropertyGroup Condition="@(_WindowsDesktopFrameworkReference) != ''">
+      <_WpfDetected>true</_WpfDetected>
+    </PropertyGroup>
+
+    <Message Text="WPF setting: $(_WpfDetected)" />
+    <PropertyGroup>
+      <DefineConstants>$(DefineConstants);TESTED_WPF</DefineConstants>
+    </PropertyGroup>
+    <!--
+    <PropertyGroup>
+    -->
+    <PropertyGroup Condition="'$(_WpfDetected)' == 'true'">
+      <DefineConstants>$(DefineConstants);WPF_AVAILABLE</DefineConstants>
+    </PropertyGroup>
+  </Target>
+
   <ItemGroup>
     <!--
     This is here so that this project builds without errors in Visual Studio.

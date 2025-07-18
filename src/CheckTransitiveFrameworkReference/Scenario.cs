@@ -28,6 +28,8 @@ internal record Scenario(
     string TfmsOfBeforeAndAfterLibrary,
     RxDependency[] RxDependenciesBefore,
     RxDependency[] RxDependenciesAfter,
+    bool UseWpfAndWindowsFormsBefore,
+    bool UseWpfAndWindowsFormsAfter,
     bool DisableTransitiveFrameworkReferencesAfter,
     bool AppHasCodeUsingNonUiFrameworkSpecificRxDirectly,
     bool AppHasCodeUsingUiFrameworkSpecificRxDirectly,
@@ -149,12 +151,16 @@ internal record Scenario(
         return
             from appChoice in appDependencyChoices
             from rxUsage in GetRxUsages(appChoice)
+            from useWpfAndWindowsFormsBefore in boolValues
+            from useWpfAndWindowsFormsAfter in boolValues
             from disableTransitiveFrameworkReferences in (ShouldTestDisableTransitiveFrameworksWorkaround(appChoice) ? boolValues : [false])
             select new Scenario(
                 ApplicationTfm: "net8.0-windows10.0.19041",
                 TfmsOfBeforeAndAfterLibrary: "net8.0;net8.0-windows10.0.19041",
                 RxDependenciesBefore: appChoice.RxBefore,
                 RxDependenciesAfter: appChoice.RxAfter,
+                UseWpfAndWindowsFormsBefore: useWpfAndWindowsFormsBefore,
+                UseWpfAndWindowsFormsAfter: useWpfAndWindowsFormsAfter,
                 DisableTransitiveFrameworkReferencesAfter: disableTransitiveFrameworkReferences,
                 AppHasCodeUsingNonUiFrameworkSpecificRxDirectly: rxUsage.AppUseRxNonUiFeaturesDirectly,
                 AppHasCodeUsingUiFrameworkSpecificRxDirectly: rxUsage.AppUseRxUiFeaturesDirectly,
