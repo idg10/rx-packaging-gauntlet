@@ -106,7 +106,7 @@ public sealed class ComponentBuilder(string appBuildTempFolderName) : IDisposabl
         var p = _projectClones.Single(c => beforeBuildResult.OutputFolder.StartsWith(c.ClonedProjectFolderPath));
         if (Directory.Exists(p.ClonedProjectFolderPath))
         {
-            await Task.Run(() => Directory.Delete(p.ClonedProjectFolderPath));
+            await Task.Run(() => Directory.Delete(p.ClonedProjectFolderPath, true));
         }
     }
 }

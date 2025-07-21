@@ -31,9 +31,27 @@ internal class CheckTransitiveFrameworkReferenceCommand : TestCommandBase<TestSe
             settings.RxLegacyPackageParsed,
             settings.RxUiFrameworkPackagesParsed,
             settings.PackageSource is string packageSource ? [("loc", packageSource)] : null);
-        foreach (var scenario in Scenario.GetScenarios())
+        List<Scenario> scenarios = Scenario.GetScenarios().ToList();
+        for (int i = 0; i < scenarios.Count; i++)
         {
+            Scenario? scenario = scenarios[i];
             Console.WriteLine(scenario);
+
+            // I'd like to do a progress bar on the TaskBar, but it seems there aren't good libraries
+            // for this right now. BenchmarkDotNet uses interop:
+            // https://github.com/dotnet/BenchmarkDotNet/pull/2158/files#diff-ada7ae88864325b6a0d06cfc63729b11deaa0a9090fa4153c761d96a4318956f
+            // So we'll just set the title
+            try
+            {
+                Console.Title = $"Running scenario {i + 1}/{scenarios.Count}";
+            }
+            catch (IOException)
+            {
+            }
+            catch (PlatformNotSupportedException)
+            {
+            }
+
             RxGauntlet.LogModel.TransitiveFrameworkReferenceTestRun testResult = await runCheck.RunScenarioAsync(scenario);
 
             testResult.WriteTo(jsonWriter);

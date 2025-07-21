@@ -274,9 +274,6 @@ internal class RunTransitiveFrameworkReferenceCheck(
         BuildAndRunOutput beforeBuildResult = await BuildApp(beforeLibraries, isAfter: false);
         BuildAndRunOutput afterBuildResult = await BuildApp(afterLibraries, isAfter: true);
 
-        await _componentBuilder.DeleteBuiltAppNowAsync(beforeBuildResult);
-        await _componentBuilder.DeleteBuiltAppNowAsync(afterBuildResult);
-
         TransitiveFrameworkReferenceTestPartResult MakePartResult(BuildAndRunOutput buildAndRunOutput)
         {
             (bool deployedWindowsForms, bool deployedWpf) = beforeBuildResult.CheckForUiComponentsInOutput();
@@ -308,6 +305,11 @@ internal class RunTransitiveFrameworkReferenceCheck(
 
         var beforeResult = MakePartResult(beforeBuildResult);
         var afterResult = MakePartResult(afterBuildResult);
+
+        // Can't do this before now because MakePartResult accesses the output folder.
+        await _componentBuilder.DeleteBuiltAppNowAsync(beforeBuildResult);
+        await _componentBuilder.DeleteBuiltAppNowAsync(afterBuildResult);
+
         var config = TransitiveFrameworkReferenceTestRunConfig.Create(
             rxVersion: NuGetPackage.Create(rxMainPackage.PackageId, rxMainPackage.Version),
             appUsesRxNonUiDirectly: scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly,
