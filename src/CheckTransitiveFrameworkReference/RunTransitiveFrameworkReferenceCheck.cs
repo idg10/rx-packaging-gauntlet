@@ -328,7 +328,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
 
     private static TestRunPartConfig MakeConfig(RxDependency[] deps, bool disableTransitiveFrameworkReferences, bool useWpfAndWindowsForms)
     {
-        return TestRunPartConfig.Create(
+        var result = TestRunPartConfig.Create(
             directRefToOldRx: deps.Any(d => d.IsOldRx),
             directRefToNewRxMain: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.LegacyPackageChoice is not NewRxLegacyOptions.JustLegacy),
             directRefToNewRxLegacyFacade: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.LegacyPackageChoice is not NewRxLegacyOptions.JustMain),
@@ -349,5 +349,13 @@ internal class RunTransitiveFrameworkReferenceCheck(
             useWpf: useWpfAndWindowsForms,
             useWindowsForms: useWpfAndWindowsForms,
             disableTransitiveFrameworkReferences: disableTransitiveFrameworkReferences);
+
+        if (deps.FirstOrDefault(d => d.TryGetTransitiveRxReferenceViaLibrary(out _)) is RxDependency trd)
+        {
+            TransitiveRxReferenceViaLibrary tr = (TransitiveRxReferenceViaLibrary)trd;
+            result = result.WithTransitiveLibraryTfms(tr.Tfms);
+        }
+
+        return result;
     }
 }

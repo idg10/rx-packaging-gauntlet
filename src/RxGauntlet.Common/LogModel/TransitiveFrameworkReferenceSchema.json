@@ -78,6 +78,7 @@
         "transitiveRefToNewRxLegacyFacade": { "type": "boolean" },
         "transitiveRefToNewRxUiPackages": { "type": "boolean" },
         "transitiveRefUsesRxUiFeatures": { "type": "boolean" },
+        "transitiveLibraryTfms": { "type": "string" },
 
         "useWpf": { "type": "boolean" },
         "useWindowsForms": { "type": "boolean" },
