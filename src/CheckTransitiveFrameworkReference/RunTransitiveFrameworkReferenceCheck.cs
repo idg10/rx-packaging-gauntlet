@@ -65,7 +65,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                 // changing the name.
                 // TODO: we don't currently have a direct way of simulating two different versions of the same package.
                 string packageVersion = $"1.0.0-preview{DateTime.UtcNow:yyyyddMMHHmmssff}";
-                string rxVersionPart = ld.ReferencesNewRxVersion ? "Old" : "New";
+                string rxVersionPart = ld.ReferencesNewRxVersion ? "New" : "Old";
                 string tfmsNamePart = string.Join(".", ld.Tfms).Replace(";", ".");
                 bool hasWindowsTarget = ld.Tfms.Contains("-windows");
                 string hasUiRxPart = hasWindowsTarget
@@ -274,9 +274,9 @@ internal class RunTransitiveFrameworkReferenceCheck(
         BuildAndRunOutput beforeBuildResult = await BuildApp(beforeLibraries, isAfter: false);
         BuildAndRunOutput afterBuildResult = await BuildApp(afterLibraries, isAfter: true);
 
-        TransitiveFrameworkReferenceTestPartResult MakePartResult(BuildAndRunOutput buildAndRunOutput)
+        static TransitiveFrameworkReferenceTestPartResult MakePartResult(BuildAndRunOutput buildAndRunOutput)
         {
-            (bool deployedWindowsForms, bool deployedWpf) = beforeBuildResult.CheckForUiComponentsInOutput();
+            (bool deployedWindowsForms, bool deployedWpf) = buildAndRunOutput.CheckForUiComponentsInOutput();
             var r = TransitiveFrameworkReferenceTestPartResult.Create(
                 buildSucceeded: buildAndRunOutput.BuildSucceeded,
                 executionExitCode: buildAndRunOutput.ExecuteExitCode,

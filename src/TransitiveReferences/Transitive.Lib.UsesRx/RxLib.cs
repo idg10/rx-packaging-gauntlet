@@ -26,8 +26,9 @@ public static class RxLib
             });
 
         Console.WriteLine("Draining message loop after Schedule");
-        Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
-        Dispatcher.Run();
+        DispatcherFrame frame = new();
+        _ = Dispatcher.CurrentDispatcher.BeginInvoke(() => frame.Continue = false, DispatcherPriority.ContextIdle);
+        Dispatcher.PushFrame(frame);
 
         Console.WriteLine("RxLib.UseRxWpf exit");
         return result;

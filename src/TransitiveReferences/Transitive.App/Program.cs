@@ -33,8 +33,9 @@ internal class Program
         Console.WriteLine($"Rx WPF (via lib): {typeof(System.Reactive.Concurrency.DispatcherScheduler).Assembly.FullName}");
         Observable.Range(1, 1).ObserveOn(Dispatcher.CurrentDispatcher).Subscribe(x => Console.WriteLine($"Received {x} from Observable.Range"));
         Console.WriteLine("Draining message loop after subscribe to ObserveOn(dispatcher)");
-        Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatcherPriority.Background);
-        Dispatcher.Run();
+        DispatcherFrame frame = new();
+        _ = Dispatcher.CurrentDispatcher.BeginInvoke(() => frame.Continue = false, DispatcherPriority.ContextIdle);
+        Dispatcher.PushFrame(frame);
         Console.WriteLine("App using Rx UI directly end");
         Console.WriteLine();
 #endif
