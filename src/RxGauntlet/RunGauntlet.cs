@@ -65,7 +65,7 @@ internal class RunGauntlet(
         PackageIdAndVersion mainRxPackage = typeAndPackageSelection.PackageSelection.MainRxPackage;
         string packageArguments = $"--rx-main-package {mainRxPackage.PackageId},{mainRxPackage.Version}{uiPackageArguments}";
         packageArguments = typeAndPackageSelection.PackageSelection.LegacyRxPackage is PackageIdAndVersion legacyRxPackage
-            ? $"{packageArguments} --rx-legacy-package {legacyRxPackage.PackageId},{legacyRxPackage.PackageId}"
+            ? $"{packageArguments} --rx-legacy-package {legacyRxPackage.PackageId},{legacyRxPackage.Version}"
             : packageArguments;
         string customFeedArgumentIfRequired = typeAndPackageSelection.PackageSelection.CustomPackageSource is string packageSource
             ? $" --package-source {packageSource}"

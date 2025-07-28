@@ -340,9 +340,10 @@ internal class RunTransitiveFrameworkReferenceCheck(
                 out TransitiveRxReferenceViaLibrary tr) && tr.ReferencesNewRxVersion),
             transitiveRefToNewRxLegacyFacade: false, // Currently we don't have a way to make this happen.
 
-            // Currently these next two properties are always the same.
-            transitiveRefToNewRxUiPackages: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
-                out TransitiveRxReferenceViaLibrary tr) && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature),
+            transitiveRefToNewRxUiPackages: deps.Any(d =>
+                d.TryGetTransitiveRxReferenceViaLibrary(out TransitiveRxReferenceViaLibrary tr)
+                    && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature
+                    && tr.ReferencesNewRxVersion),
             transitiveRefUsesRxUiFeatures: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
                 out TransitiveRxReferenceViaLibrary tr) && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature),
 
