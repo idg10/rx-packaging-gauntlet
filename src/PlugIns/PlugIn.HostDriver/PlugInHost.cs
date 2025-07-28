@@ -14,7 +14,7 @@ public sealed class PlugInHost : IDisposable
         const string Configuration = "Release";
 #endif
 
-    private PlugInBuilder _plugInBuilder = new();
+    private readonly PlugInBuilder _plugInBuilder = new();
 
     /// <summary>
     /// Removes the temporary plug-in projects created by calls to
@@ -67,7 +67,7 @@ public sealed class PlugInHost : IDisposable
 
         if (hostRuntimeTfm.StartsWith("net"))
         {
-            if (hostRuntimeTfm.Contains("."))
+            if (hostRuntimeTfm.Contains('.'))
             {
                 // .NET Core or .NET 5+
                 launcher = "PlugIn.HostDotnet";
@@ -83,7 +83,7 @@ public sealed class PlugInHost : IDisposable
             throw new ArgumentException($"Unsupported host runtime TFM: {hostRuntimeTfm}");
         }
 
-        DirectoryInfo plugInsFolder = new DirectoryInfo(
+        DirectoryInfo plugInsFolder = new(
             Path.Combine(AppContext.BaseDirectory, "../../../../../PlugIns/"));
         if (!plugInsFolder.Exists)
         {

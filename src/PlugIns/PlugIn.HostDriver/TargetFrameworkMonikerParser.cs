@@ -5,9 +5,9 @@ namespace PlugIn.HostDriver;
 /// <summary>
 /// Decodes target framework monikers (TFMs) for .NET Framework and .NET.
 /// </summary>
-public class TargetFrameworkMonikerParser
+public partial class TargetFrameworkMonikerParser
 {
-    private static readonly Regex DotnetTfmRegex = new(@"^net(?<major>\d+)\.(?<minor>\d+)(?<os>-(?<osname>[^\d]+)(?<osversion>[\d.]*))?$");
+    private static readonly Regex DotnetTfmRegex = DotnetTfmRegexGen();
 
     /// <summary>
     /// Extracs the major and minor version numbers from a .NET Framework target framework moniker (TFM).
@@ -104,4 +104,7 @@ public class TargetFrameworkMonikerParser
         minorVersionAsTwoDigitNumber = minorVersion * 10;
         return true;
     }
+
+    [GeneratedRegex(@"^net(?<major>\d+)\.(?<minor>\d+)(?<os>-(?<osname>[^\d]+)(?<osversion>[\d.]*))?$")]
+    private static partial Regex DotnetTfmRegexGen();
 }

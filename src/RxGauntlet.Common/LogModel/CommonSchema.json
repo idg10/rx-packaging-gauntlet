@@ -29,11 +29,11 @@
       "properties": {
         "rxVersion": { "$ref": "./CommonSchema.json#/$defs/nuGetPackage" }
       },
-      "required": ["rxVersion"]
+      "required": [ "rxVersion" ]
     },
 
     "testRunConfigSingleBuildTarget": {
-      "$comment":  "Most test scenarios build a single artifact, so it makes sense to describe the base TFM and, where applicable, Windows version for the test run. But this is not in the base testRunConfig because some test scenarios (notably the Plug-in repro) involve multiple build outputs with different TFMs.",
+      "$comment": "Most test scenarios build a single artifact, so it makes sense to describe the base TFM and, where applicable, Windows version for the test run. But this is not in the base testRunConfig because some test scenarios (notably the Plug-in repro) involve multiple build outputs with different TFMs.",
       "$ref": "./CommonSchema.json#/$defs/testRunConfig",
       "properties": {
         "baseNetTfm": { "type": "string" },
@@ -81,6 +81,47 @@
         "id",
         "version"
       ]
+    },
+
+    "bloatTestResults": {
+      "properties": {
+        "deployedWpf": { "type": "boolean" },
+        "deployedWindowsForms": { "type": "boolean" }
+      },
+      "required": [
+        "deployedWpf",
+        "deployedWindowsForms"
+      ]
+    },
+
+    "buildResults": {
+      "properties": {
+        "buildSucceeded": { "type": "boolean" },
+        "buildStdOut": {
+          "$comment": "Optional - typically only present if build failed",
+          "type": "string"
+        }
+      },
+      "required": [
+        "buildSucceeded"
+      ]
+    },
+
+    "executionResults": {
+      "properties": {
+        "executionExitCode": {
+          "$comment": "Optional because execution may not even have happened. (A build might have failed.)",
+          "type": "integer"
+        },
+        "executionStdOut": {
+          "$comment": "Optional - typically only present if execution failed",
+          "type": "string"
+        },
+        "executionStdErr": {
+          "$comment": "Optional - typically only present if execution failed",
+          "type": "string"
+        }
+      }
     }
   }
 }

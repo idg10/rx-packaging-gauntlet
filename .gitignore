@@ -394,5 +394,10 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# Reqnroll generated files
+*.feature.cs
+
 # JetBrains Rider
 *.sln.iml
+*.ncrunchproject
+*.ncrunchsolution

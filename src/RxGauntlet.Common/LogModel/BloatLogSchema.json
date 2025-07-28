@@ -4,15 +4,15 @@
   "$id": "http://endjin.com/schemas/rx-gauntlet/bloatlog",
   "$defs": {
     "issue1745TestRun": {
-      "$ref": "./CommonSchema.json#/$defs/testRun",
+      "allOf": [
+        { "$ref": "./CommonSchema.json#/$defs/testRun" },
+        { "$ref": "./CommonSchema.json#/$defs/bloatTestResults" }
+      ],
       "properties": {
-        "config": { "$ref": "#/$defs/issue1745TestRunConfig" },
-        "deployedWpf": { "type": "boolean" },
-        "deployedWindowsForms": { "type": "boolean" }
+        "config": { "$ref": "#/$defs/issue1745TestRunConfig" }
       },
       "required": [
-        "deployedWpf",
-        "deployedWindowsForms"
+        "config"
       ]
     },
 

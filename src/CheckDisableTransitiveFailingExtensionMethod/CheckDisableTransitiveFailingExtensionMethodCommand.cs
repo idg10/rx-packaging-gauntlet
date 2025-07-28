@@ -20,11 +20,8 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
     protected override async Task<int> ExecuteTestAsync(
         TestDetails testDetails, CommandContext context, TestSettings settings, Utf8JsonWriter jsonWriter)
     {
-        PackageIdAndVersion[]? replaceSystemReactiveWith = settings.RxPackagesParsed;
-        if (replaceSystemReactiveWith is [])
-        {
-            replaceSystemReactiveWith = null;
-        }
+        // TODO: check that using only the main package is the right thing to do here.
+        PackageIdAndVersion[] replaceSystemReactiveWith = [settings.RxMainPackageParsed];
 
         string templateProjectFolder =
             Path.Combine(AppContext.BaseDirectory, "../../../../ExtensionMethods/ExtensionMethods.DisableTransitiveWorkaroundFail/");
@@ -84,26 +81,11 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
                 },
                 settings.PackageSource is string packageSource ? [("loc", packageSource)] : null))
             {
-                int result = await projectClone.RunDotnetBuild("ExtensionMethods.DisableTransitiveWorkaroundFail.csproj");
+                BuildOutput buildResult = await projectClone.RunDotnetBuild("ExtensionMethods.DisableTransitiveWorkaroundFail.csproj");
 
-                Console.WriteLine($"{scenario}: {result}");
-                string binFolder = Path.Combine(projectClone.ClonedProjectFolderPath, "bin");
+                Console.WriteLine($"{scenario}: {buildResult}");
 
-                bool includesWpf = false;
-                bool includesWindowsForms = false;
-                foreach (string file in Directory.GetFiles(binFolder, "*", new EnumerationOptions { RecurseSubdirectories = true }))
-                {
-                    string filename = Path.GetFileName(file);
-                    if (filename.Equals("PresentationFramework.dll", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        includesWpf = true;
-                    }
-
-                    if (filename.Equals("System.Windows.Forms.dll", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        includesWindowsForms = true;
-                    }
-                }
+                (bool includesWpf, bool includesWindowsForms) = buildResult.CheckForUiComponentsInOutput();
 
                 Debug.Assert(!string.IsNullOrWhiteSpace(rxPackage), "rxPackage should not be null or empty.");
                 Debug.Assert(!string.IsNullOrWhiteSpace(rxVersion), "rxVersion should not be null or empty.");
@@ -124,7 +106,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
                 }
                 return ExtensionMethodsWorkaroundTestRun.Create(
                     config: config,
-                    buildSucceeded: result == 0,
+                    buildSucceeded: buildResult.BuildSucceeded,
                     deployedWindowsForms: includesWindowsForms,
                     deployedWpf: includesWpf,
                     testRunDateTime: testDetails.TestRunDateTime,

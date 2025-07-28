@@ -8,5 +8,5 @@ internal record Scenario(
     bool? UseWpf,
     bool? UseWindowsForms,
     bool EmitDisableTransitiveFrameworkReferences,
-    PackageIdAndVersion[] RxPackages,
+    PackageIdAndVersion RxMainPackage,
     string? PackageSource);

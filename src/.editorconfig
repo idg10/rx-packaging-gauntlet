@@ -1,0 +1,10 @@
+﻿[*.{cs,vb}]
+
+# IDE0305: Simplify collection initialization
+
+# IDE0063: Use simple 'using' statement
+dotnet_diagnostic.IDE0063.severity = silent
+
+# This particular rule wants to turn x.ToArray() into the rather idiosyncratic [..x]. It's shorter but
+# not necessarily 'simpler'.
+dotnet_style_prefer_collection_expression = never
