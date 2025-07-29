@@ -1,4 +1,8 @@
-﻿// This illustrates a plausible use of WinRT APIs in combination with Rx in a .NET 8 console application.
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT License.
+// See the LICENSE file in the project root for more information. 
+
+// This illustrates a plausible use of WinRT APIs in combination with Rx in a .NET 8 console application.
 //
 // This is useful because it's about the most lightweight form of dependency on a Windows-specific TFM: the WinRT APIs
 // would be unavailable with a normal TFM, but we've not got a heavyweight dependency on a UI framework. Nor have we had
