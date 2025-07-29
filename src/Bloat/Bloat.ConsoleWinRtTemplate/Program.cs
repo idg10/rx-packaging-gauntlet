@@ -15,14 +15,14 @@ using System.Reactive.Linq;
 using Windows.Networking.Connectivity;
 
 var p = NetworkInformation.GetConnectionProfiles().ToList();
-ConnectionProfile ip = NetworkInformation.GetInternetConnectionProfile();
+var ip = NetworkInformation.GetInternetConnectionProfile();
 Console.WriteLine(ip.ProfileName);
 
-IObservable<object> networkStatusChanges = Observable.FromEvent<NetworkStatusChangedEventHandler, object>(
+var networkStatusChanges = Observable.FromEvent<NetworkStatusChangedEventHandler, object>(
     h => NetworkInformation.NetworkStatusChanged += h,
     h => NetworkInformation.NetworkStatusChanged -= h);
 
-IObservable<NetworkConnectivityLevel> connectivity = Observable
+var connectivity = Observable
     .Concat(Observable.Return(default(object)), networkStatusChanges)
     .Select(_ => NetworkInformation.GetInternetConnectionProfile()?.GetNetworkConnectivityLevel() ?? NetworkConnectivityLevel.None)
     .DistinctUntilChanged();

@@ -39,8 +39,8 @@ internal record Scenario(
     bool AppInvokesLibraryMethodThatUsesNonUiFrameworkSpecificRxFeature,
     bool AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature) // TODO: do we need before/after/both flavours of this?
 {
-    private readonly static bool[] boolValues = [false, true];
-    private readonly static bool[] boolJustFalse = [false];
+    private static readonly bool[] BoolValues = [false, true];
+    private static readonly bool[] BoolJustFalse = [false];
 
     public static IEnumerable<Scenario> GetScenarios()
     {
@@ -49,7 +49,7 @@ internal record Scenario(
         //
         // App dimension 1: Rx initially referenced directly by app csproj vs only referenced transitively
         // App dimension 2: latest version via csproj vs reference
-        AppDependencies[] appDependencyChoices = AppDependenciesScenarioGeneration.Generate();
+        var appDependencyChoices = AppDependenciesScenarioGeneration.Generate();
 
         // App dimension 3: use of RX UI features
         //
@@ -65,9 +65,9 @@ internal record Scenario(
             bool ReferencesLib(RxDependency[] deps) => deps
                 .Any(ac => ac.Match((DirectRxPackageReference _) => false, (TransitiveRxReferenceViaLibrary _) => true));
 
-            bool libAvailableBefore = ReferencesLib(appChoice.RxBefore);
-            bool libAvailableAfter = ReferencesLib(appChoice.RxAfter);
-            bool libAvailableBeforeAndAfter = libAvailableBefore && libAvailableAfter;
+            var libAvailableBefore = ReferencesLib(appChoice.RxBefore);
+            var libAvailableAfter = ReferencesLib(appChoice.RxAfter);
+            var libAvailableBeforeAndAfter = libAvailableBefore && libAvailableAfter;
 
             // Determine whether Rx UI features are available to the library that gives us a transitive
             // Rx reference (if such a library is referenced at all).
@@ -82,18 +82,18 @@ internal record Scenario(
                     // but not use it. Since this doesn't seem like a useful scenario, we don't model it.
                     || t.HasWindowsTargetUsingUiFrameworkSpecificRxFeature);
             bool ReferencesLibThatHasCouldUseRxUi(RxDependency[] deps) => deps.Any(ReferenceIsLibThatHasCouldUseRxUi);
-            bool uiAvailableToLibInBefore = ReferencesLibThatHasCouldUseRxUi(appChoice.RxBefore);
-            bool uiAvailableToLibInAfter = ReferencesLibThatHasCouldUseRxUi(appChoice.RxAfter);
-            bool uiAvailableToLibInBeforeAndAfter = uiAvailableToLibInBefore && uiAvailableToLibInAfter;
+            var uiAvailableToLibInBefore = ReferencesLibThatHasCouldUseRxUi(appChoice.RxBefore);
+            var uiAvailableToLibInAfter = ReferencesLibThatHasCouldUseRxUi(appChoice.RxAfter);
+            var uiAvailableToLibInBeforeAndAfter = uiAvailableToLibInBefore && uiAvailableToLibInAfter;
 
             // Determines whether the library will in fact offer a public API that uses UI-specific Rx features.
             bool ReferencesLibThatProvidesUiFeature(RxDependency[] deps) => deps
                 .Any(ac => ReferenceIsLibThatHasCouldUseRxUi(ac) && ac.Match(
                     (DirectRxPackageReference rx) => false,
                     (TransitiveRxReferenceViaLibrary t) => t.HasWindowsTargetUsingUiFrameworkSpecificRxFeature));
-            bool libProvidesUiFeatureInBefore = ReferencesLibThatProvidesUiFeature(appChoice.RxBefore);
-            bool libProvidesUiFeatureInAfter = ReferencesLibThatProvidesUiFeature(appChoice.RxAfter);
-            bool libProvidesUiFeatureInBeforeAndAfter = libProvidesUiFeatureInBefore && libProvidesUiFeatureInAfter;
+            var libProvidesUiFeatureInBefore = ReferencesLibThatProvidesUiFeature(appChoice.RxBefore);
+            var libProvidesUiFeatureInAfter = ReferencesLibThatProvidesUiFeature(appChoice.RxAfter);
+            var libProvidesUiFeatureInBeforeAndAfter = libProvidesUiFeatureInBefore && libProvidesUiFeatureInAfter;
 
             // This determines whether Rx's UI features are available as a result of the references we
             // have. (Note that even when Rx's UI features are available to the app as a result of an
@@ -103,14 +103,14 @@ internal record Scenario(
                 .Any(ac => ac.Match(
                     (DirectRxPackageReference rx) => rx.Match((OldRx _) => true, (NewRx n) => n.IncludeUiPackages),
                     (TransitiveRxReferenceViaLibrary t) => t.HasWindowsTargetUsingUiFrameworkSpecificRxFeature));
-            bool uiAvailableViaReferencesBefore = ReferencesMakeRxUiAvailable(appChoice.RxBefore);
-            bool uiAvailableViaReferencesAfter = ReferencesMakeRxUiAvailable(appChoice.RxAfter);
-            bool uiAvailableBeforeAndAfter = uiAvailableViaReferencesBefore && uiAvailableViaReferencesAfter;
+            var uiAvailableViaReferencesBefore = ReferencesMakeRxUiAvailable(appChoice.RxBefore);
+            var uiAvailableViaReferencesAfter = ReferencesMakeRxUiAvailable(appChoice.RxAfter);
+            var uiAvailableBeforeAndAfter = uiAvailableViaReferencesBefore && uiAvailableViaReferencesAfter;
 
             IEnumerable<RxUsageChoices> ForAppRxUsage(bool appUseRxNonUiFeatures, bool appUseRxUiFeatures)
             {
                 return
-                    from appInvokesLibUi in (libProvidesUiFeatureInBeforeAndAfter ? boolValues : boolJustFalse)
+                    from appInvokesLibUi in (libProvidesUiFeatureInBeforeAndAfter ? BoolValues : BoolJustFalse)
                     select new RxUsageChoices(
                         AppInvokesLibraryCodePathsUsingRxNonUiFeatures: libAvailableBeforeAndAfter,
                         AppInvokesLibraryCodePathsUsingRxUiFeatures: appInvokesLibUi,
@@ -119,8 +119,8 @@ internal record Scenario(
             }
 
             return
-                (from appUsesNonUiRxDirectly in boolValues
-                 from appUseRxUiFeatures in uiAvailableBeforeAndAfter ? boolValues : [false]
+                (from appUsesNonUiRxDirectly in BoolValues
+                 from appUseRxUiFeatures in uiAvailableBeforeAndAfter ? BoolValues : [false]
                  from usageChoice in ForAppRxUsage(appUsesNonUiRxDirectly, appUseRxUiFeatures)
                  select usageChoice)
                  .ToArray();
@@ -154,9 +154,9 @@ internal record Scenario(
         return
             from appChoice in appDependencyChoices
             from rxUsage in GetRxUsages(appChoice)
-            from useWpfAndWindowsFormsBefore in boolValues
-            from useWpfAndWindowsFormsAfter in boolValues
-            from disableTransitiveFrameworkReferences in (ShouldTestDisableTransitiveFrameworksWorkaround(appChoice) ? boolValues : [false])
+            from useWpfAndWindowsFormsBefore in BoolValues
+            from useWpfAndWindowsFormsAfter in BoolValues
+            from disableTransitiveFrameworkReferences in (ShouldTestDisableTransitiveFrameworksWorkaround(appChoice) ? BoolValues : [false])
             select new Scenario(
                 ApplicationTfm: "net8.0-windows10.0.19041",
                 TfmsOfBeforeAndAfterLibrary: "net8.0;net8.0-windows10.0.19041",
@@ -237,7 +237,7 @@ internal partial class RxDependency : OneOfBase<DirectRxPackageReference, Transi
 
     public bool TryGetNewRx(out NewRx newRx)
     {
-        if (TryGetDirectRxPackageReference(out DirectRxPackageReference pr))
+        if (TryGetDirectRxPackageReference(out var pr))
         {
             return pr.TryGetNewRx(out newRx);
         }
@@ -247,7 +247,7 @@ internal partial class RxDependency : OneOfBase<DirectRxPackageReference, Transi
 
     public bool TryGetOldRx(out OldRx oldRx)
     {
-        if (TryGetDirectRxPackageReference(out DirectRxPackageReference pr))
+        if (TryGetDirectRxPackageReference(out var pr))
         {
             return pr.TryGetOldRx(out oldRx);
         }

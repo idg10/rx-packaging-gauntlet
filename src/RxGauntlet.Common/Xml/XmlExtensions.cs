@@ -16,7 +16,7 @@ public static class XmlExtensions
 
     public static void SetAttribute(this XmlNode node, string attributeName, string attributeValue)
     {
-        XmlAttributeCollection attributes = node.Attributes!;
+        var attributes = node.Attributes!;
         if (attributes[attributeName] is not XmlAttribute attribute)
         {
             attribute = node.OwnerDocument!.CreateAttribute(attributeName);

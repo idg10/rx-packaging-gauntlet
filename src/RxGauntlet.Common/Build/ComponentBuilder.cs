@@ -18,17 +18,17 @@ public sealed class ComponentBuilder(string appBuildTempFolderName) : IDisposabl
         Action<ProjectFileRewriter> modifyProjectFile,
         (string FeedName, string FeedLocation)[]? additionalPackageSources)
     {
-        (string projectTemplateFileName, ModifiedProjectClone projectClone) = CreateModifiedProjectClone(
+        (var projectTemplateFileName, var projectClone) = CreateModifiedProjectClone(
             PackageTempFolderName, templateCsProj, modifyProjectFile, additionalPackageSources);
 
-        BuildOutput packResults = await projectClone.RunDotnetPack(projectTemplateFileName);
+        var packResults = await projectClone.RunDotnetPack(projectTemplateFileName);
 
         if (!Directory.Exists(LocalNuGetPackageFolderPath))
         {
             Directory.CreateDirectory(LocalNuGetPackageFolderPath);
         }
 
-        string nupkgPath = Directory.GetFiles(
+        var nupkgPath = Directory.GetFiles(
             packResults.OutputFolder,
             "*.nupkg",
             SearchOption.AllDirectories) switch
@@ -38,7 +38,7 @@ public sealed class ComponentBuilder(string appBuildTempFolderName) : IDisposabl
             _ => throw new InvalidOperationException("Multiple .nupkg files found after packing the project")
         };
 
-        string destinationNupkgPath = Path.Combine(LocalNuGetPackageFolderPath, Path.GetFileName(nupkgPath));
+        var destinationNupkgPath = Path.Combine(LocalNuGetPackageFolderPath, Path.GetFileName(nupkgPath));
         File.Copy(nupkgPath, destinationNupkgPath);
 
         return packResults;
@@ -64,7 +64,7 @@ public sealed class ComponentBuilder(string appBuildTempFolderName) : IDisposabl
                 ..(additionalPackageSources ?? [])
             ];
 
-        (string projectTemplateFileName, ModifiedProjectClone project) = CreateModifiedProjectClone(
+        (var projectTemplateFileName, var project) = CreateModifiedProjectClone(
             appBuildTempFolderName, templateCsProj, modifyProjectFile, packageSourcesIncludingDynamicallyBuiltPackages);
 
         return await project.RunDotnetBuild(projectTemplateFileName);
@@ -76,9 +76,9 @@ public sealed class ComponentBuilder(string appBuildTempFolderName) : IDisposabl
         Action<ProjectFileRewriter> modifyProjectFile,
         (string FeedName, string FeedLocation)[]? additionalPackageSources)
     {
-        string projectTemplateFolder = Path.GetDirectoryName(templateCsProj)
+        var projectTemplateFolder = Path.GetDirectoryName(templateCsProj)
             ?? throw new ArgumentException("Template csproj path should be absolute", nameof(templateCsProj));
-        string projectTemplateFileName = Path.GetFileName(templateCsProj)
+        var projectTemplateFileName = Path.GetFileName(templateCsProj)
             ?? throw new ArgumentException("Template csproj path should refer to a file, not a directory", nameof(templateCsProj));
         var projectClone = ModifiedProjectClone.Create(
             projectTemplateFolder,
@@ -92,7 +92,7 @@ public sealed class ComponentBuilder(string appBuildTempFolderName) : IDisposabl
 
     public void Dispose()
     {
-        foreach (ModifiedProjectClone clone in _projectClones)
+        foreach (var clone in _projectClones)
         {
             clone.Dispose();
         }

@@ -6,11 +6,11 @@ namespace CheckTransitiveFrameworkReference.ScenarioGeneration;
 
 internal static class AppDependenciesScenarioGeneration
 {
-    private readonly static bool[] boolValues = [false, true];
-    private readonly static bool[] boolJustFalse = [false];
+    private static readonly bool[] BoolValues = [false, true];
+    private static readonly bool[] BoolJustFalse = [false];
 
-    private readonly static string[] tfmLists = ["net8.0", "net8.0;net8.0-windows10.0.19041"];
-    private readonly static NewRxLegacyOptions[] addOptions = [NewRxLegacyOptions.JustMain, NewRxLegacyOptions.JustLegacy, NewRxLegacyOptions.MainAndLegacy];
+    private static readonly string[] TfmLists = ["net8.0", "net8.0;net8.0-windows10.0.19041"];
+    private static readonly NewRxLegacyOptions[] AddOptions = [NewRxLegacyOptions.JustMain, NewRxLegacyOptions.JustLegacy, NewRxLegacyOptions.MainAndLegacy];
 
     public static IEnumerable<AppDependencies> GenerateOldTransitiveRefThenAddCombinations()
     {
@@ -68,9 +68,9 @@ internal static class AppDependenciesScenarioGeneration
     private static IEnumerable<(NewRxLegacyOptions AddOption, string LibTfms, bool LibHasUiCode)> GetVariations()
     {
         return
-            from add in addOptions
-            from tfms in tfmLists
-            from libHasUiCode in (tfms.Contains("-windows") ? boolValues : boolJustFalse)
+            from add in AddOptions
+            from tfms in TfmLists
+            from libHasUiCode in (tfms.Contains("-windows") ? BoolValues : BoolJustFalse)
             select (add, tfms, libHasUiCode);
     }
 
@@ -103,9 +103,9 @@ internal static class AppDependenciesScenarioGeneration
 
     public static AppDependencies[] Generate()
     {
-        IEnumerable<AppDependencies> hasOldTransitiveRefThenAdd = GenerateOldTransitiveRefThenAddCombinations();
-        IEnumerable<AppDependencies> oldDirectAndTransitiveRefThenUpgradeCombinations = GenerateOldDirectAndTransitiveRefThenUpgradeCombinations();
-        IEnumerable<AppDependencies> newDirectRefThenAddOldTransitiveCombinations = GenerateNewDirectThenAddTransitiveRefToOldCombinations();
+        var hasOldTransitiveRefThenAdd = GenerateOldTransitiveRefThenAddCombinations();
+        var oldDirectAndTransitiveRefThenUpgradeCombinations = GenerateOldDirectAndTransitiveRefThenUpgradeCombinations();
+        var newDirectRefThenAddOldTransitiveCombinations = GenerateNewDirectThenAddTransitiveRefToOldCombinations();
 
         // TODO: do we need to model starting with a new direct ref then adding a new transitive ref? There's no reason to
         // expect that not to work. But what if we have transitive refs to both old and new?

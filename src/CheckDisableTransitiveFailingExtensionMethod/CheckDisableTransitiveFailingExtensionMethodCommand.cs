@@ -25,7 +25,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
         // TODO: check that using only the main package is the right thing to do here.
         PackageIdAndVersion[] replaceSystemReactiveWith = [settings.RxMainPackageParsed];
 
-        string templateProjectFolder =
+        var templateProjectFolder =
             Path.Combine(AppContext.BaseDirectory, "../../../../ExtensionMethods/ExtensionMethods.DisableTransitiveWorkaroundFail/");
 
         string[] baseNetTfms = ["net8.0"];
@@ -33,7 +33,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
         bool?[] boolsWithNull = [null, true, false];
         bool[] bools = [true, false];
 
-        IEnumerable<Scenario> scenarios =
+        var scenarios =
             from baseNetTfm in baseNetTfms
             from windowsVersion in windowsVersions
             from useWpf in (windowsVersion is null ? [false] : boolsWithNull)
@@ -42,9 +42,9 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
             select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround);
 
         jsonWriter.WriteStartArray();
-        foreach (Scenario scenario in scenarios)
+        foreach (var scenario in scenarios)
         {
-            ExtensionMethodsWorkaroundTestRun result = await RunScenario(scenario);
+            var result = await RunScenario(scenario);
             result.WriteTo(jsonWriter);
             jsonWriter.Flush();
         }
@@ -55,7 +55,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
         async Task<ExtensionMethodsWorkaroundTestRun> RunScenario(Scenario scenario)
         {
             Console.WriteLine(scenario);
-            string tfm = scenario.WindowsVersion is string windowsVersion
+            var tfm = scenario.WindowsVersion is string windowsVersion
                 ? $"{scenario.BaseNetTfm}-{windowsVersion}"
                 : scenario.BaseNetTfm;
 
@@ -83,15 +83,15 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
                 },
                 settings.PackageSource is string packageSource ? [("loc", packageSource)] : null))
             {
-                BuildOutput buildResult = await projectClone.RunDotnetBuild("ExtensionMethods.DisableTransitiveWorkaroundFail.csproj");
+                var buildResult = await projectClone.RunDotnetBuild("ExtensionMethods.DisableTransitiveWorkaroundFail.csproj");
 
                 Console.WriteLine($"{scenario}: {buildResult}");
 
-                (bool includesWpf, bool includesWindowsForms) = buildResult.CheckForUiComponentsInOutput();
+                (var includesWpf, var includesWindowsForms) = buildResult.CheckForUiComponentsInOutput();
 
                 Debug.Assert(!string.IsNullOrWhiteSpace(rxPackage), "rxPackage should not be null or empty.");
                 Debug.Assert(!string.IsNullOrWhiteSpace(rxVersion), "rxVersion should not be null or empty.");
-                NuGetPackage rxVersionPackage = NuGetPackage.Create(
+                var rxVersionPackage = NuGetPackage.Create(
                     id: rxPackage,
                     version: rxVersion,
                     packageSource: settings.PackageSource.AsNullableJsonString());

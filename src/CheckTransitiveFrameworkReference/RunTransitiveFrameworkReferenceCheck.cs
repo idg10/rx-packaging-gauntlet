@@ -67,16 +67,16 @@ internal class RunTransitiveFrameworkReferenceCheck(
                 // match, because it presumes nobody would ever try to publish a new version of a package without
                 // changing the name.
                 // TODO: we don't currently have a direct way of simulating two different versions of the same package.
-                string packageVersion = $"1.0.0-preview{DateTime.UtcNow:yyyyddMMHHmmssff}";
-                string rxVersionPart = ld.ReferencesNewRxVersion ? "New" : "Old";
-                string tfmsNamePart = string.Join(".", ld.Tfms).Replace(";", ".");
-                bool hasWindowsTarget = ld.Tfms.Contains("-windows");
-                string hasUiRxPart = hasWindowsTarget
+                var packageVersion = $"1.0.0-preview{DateTime.UtcNow:yyyyddMMHHmmssff}";
+                var rxVersionPart = ld.ReferencesNewRxVersion ? "New" : "Old";
+                var tfmsNamePart = string.Join(".", ld.Tfms).Replace(";", ".");
+                var hasWindowsTarget = ld.Tfms.Contains("-windows");
+                var hasUiRxPart = hasWindowsTarget
                     ? (ld.HasWindowsTargetUsingUiFrameworkSpecificRxFeature ? ".Ui" : ".NoUi")
                     : "";
-                string assemblyName = $"Transitive.Lib.UsesRx.{rxVersionPart}{hasUiRxPart}.{tfmsNamePart}";
+                var assemblyName = $"Transitive.Lib.UsesRx.{rxVersionPart}{hasUiRxPart}.{tfmsNamePart}";
 
-                BuildOutput packageBuildResult = await _componentBuilder.BuildLocalNuGetPackageAsync(
+                var packageBuildResult = await _componentBuilder.BuildLocalNuGetPackageAsync(
                     LibTemplateProject,
                     project =>
                     {
@@ -90,7 +90,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                             // to a legacy facade, but a component has a reference to System.Reactive v7. I don't think
                             // that's a thing a library should ever do but perhaps we need to test it.
 
-                            PackageIdAndVersion[] replaceSystemReactiveWith = ld.HasWindowsTargetUsingUiFrameworkSpecificRxFeature
+                            var replaceSystemReactiveWith = ld.HasWindowsTargetUsingUiFrameworkSpecificRxFeature
                                 ? [..newRxMainAndIfRequiredLegacyPackage, ..rxUiPackages]
                                 : newRxMainAndIfRequiredLegacyPackage;
                             project.ReplacePackageReference("System.Reactive", replaceSystemReactiveWith);
@@ -117,14 +117,14 @@ internal class RunTransitiveFrameworkReferenceCheck(
                 ..scenario.RxDependenciesBefore,
                 ..scenario.RxDependenciesAfter,
             ];
-        foreach (RxDependency dependency in libs)
+        foreach (var dependency in libs)
         {
             await dependency.Match(
                 (DirectRxPackageReference _) => Task.CompletedTask,
                 ProcessLib);
         }
 
-        bool appExpectingToUseRxUiFeatures = scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly
+        var appExpectingToUseRxUiFeatures = scenario.AppHasCodeUsingNonUiFrameworkSpecificRxDirectly
             || scenario.AppInvokesLibraryMethodThatUsesUiFrameworkSpecificRxFeature;
         //PackageIdAndVersion[] GetPackage(LibraryDetails? ld, RxAcquiredVia acq, bool packageRefsIncludeLegacyPackageIfAvailable)
         PackageIdAndVersion[] GetPackage(RxDependency rxDependency)
@@ -143,7 +143,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
                     (OldRx _) => [OldRx],
                     (NewRx newRx) =>
                     {
-                        PackageIdAndVersion[] rxMainRef = newRx.LegacyPackageChoice switch
+                        var rxMainRef = newRx.LegacyPackageChoice switch
                         {
                             NewRxLegacyOptions.JustMain => [rxMainPackage],
                             NewRxLegacyOptions.JustLegacy => newRxLegacyPackageIfAvailableElseMain,
@@ -157,15 +157,15 @@ internal class RunTransitiveFrameworkReferenceCheck(
             }
         }
 
-        PackageIdAndVersion[] beforeLibraries = scenario.RxDependenciesBefore.SelectMany(GetPackage).ToArray();
-        PackageIdAndVersion[] afterLibraries = scenario.RxDependenciesAfter.SelectMany(GetPackage).ToArray();
+        var beforeLibraries = scenario.RxDependenciesBefore.SelectMany(GetPackage).ToArray();
+        var afterLibraries = scenario.RxDependenciesAfter.SelectMany(GetPackage).ToArray();
 
         async Task<BuildAndRunOutput> BuildApp(PackageIdAndVersion[] packageRefs, bool isAfter)
         {
             // Note that the ComponentBuilder automatically adds the dynamically created package source
             // (which contains any packages just built with _componentBuilder.BuildLocalNuGetPackageAsync)
             // to the list of available feeds, combining that with and feeds specified in this call.
-            BuildOutput r = await _componentBuilder.BuildAppAsync(
+            var r = await _componentBuilder.BuildAppAsync(
                 AppTemplateProject,
                 project =>
                 {
@@ -234,10 +234,10 @@ internal class RunTransitiveFrameworkReferenceCheck(
 
                     // TODO: we have 3 versions of this stdout handling now. 1: centralise. 2: work out
                     // if we really need this extra time to complete stdout handling.
-                    Task<string> stdOutTask = Task.Run(process.StandardOutput.ReadToEndAsync);
-                    Task<string> stdErrTask = Task.Run(process.StandardError.ReadToEndAsync);
-                    Task processTask = process.WaitForExitAsync();
-                    Task firstToFinish = await Task.WhenAny(processTask, stdOutTask, stdErrTask);
+                    var stdOutTask = Task.Run(process.StandardOutput.ReadToEndAsync);
+                    var stdErrTask = Task.Run(process.StandardError.ReadToEndAsync);
+                    var processTask = process.WaitForExitAsync();
+                    var firstToFinish = await Task.WhenAny(processTask, stdOutTask, stdErrTask);
 
                     if (!stdOutTask.IsCompleted)
                     {
@@ -274,12 +274,12 @@ internal class RunTransitiveFrameworkReferenceCheck(
         }
 
         // TODO: we will actually build two apps: before and after upgrade.
-        BuildAndRunOutput beforeBuildResult = await BuildApp(beforeLibraries, isAfter: false);
-        BuildAndRunOutput afterBuildResult = await BuildApp(afterLibraries, isAfter: true);
+        var beforeBuildResult = await BuildApp(beforeLibraries, isAfter: false);
+        var afterBuildResult = await BuildApp(afterLibraries, isAfter: true);
 
         static TransitiveFrameworkReferenceTestPartResult MakePartResult(BuildAndRunOutput buildAndRunOutput)
         {
-            (bool deployedWindowsForms, bool deployedWpf) = buildAndRunOutput.CheckForUiComponentsInOutput();
+            (var deployedWindowsForms, var deployedWpf) = buildAndRunOutput.CheckForUiComponentsInOutput();
             var r = TransitiveFrameworkReferenceTestPartResult.Create(
                 buildSucceeded: buildAndRunOutput.BuildSucceeded,
                 executionExitCode: buildAndRunOutput.ExecuteExitCode,
@@ -333,22 +333,22 @@ internal class RunTransitiveFrameworkReferenceCheck(
     {
         var result = TestRunPartConfig.Create(
             directRefToOldRx: deps.Any(d => d.IsOldRx),
-            directRefToNewRxMain: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.LegacyPackageChoice is not NewRxLegacyOptions.JustLegacy),
-            directRefToNewRxLegacyFacade: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.LegacyPackageChoice is not NewRxLegacyOptions.JustMain),
-            directRefToNewRxUiPackages: deps.Any(d => d.TryGetNewRx(out NewRx n) && n.IncludeUiPackages),
+            directRefToNewRxMain: deps.Any(d => d.TryGetNewRx(out var n) && n.LegacyPackageChoice is not NewRxLegacyOptions.JustLegacy),
+            directRefToNewRxLegacyFacade: deps.Any(d => d.TryGetNewRx(out var n) && n.LegacyPackageChoice is not NewRxLegacyOptions.JustMain),
+            directRefToNewRxUiPackages: deps.Any(d => d.TryGetNewRx(out var n) && n.IncludeUiPackages),
 
             transitiveRefToOldRx: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
-                out TransitiveRxReferenceViaLibrary tr) && !tr.ReferencesNewRxVersion),
+                out var tr) && !tr.ReferencesNewRxVersion),
             transitiveRefToNewRxMain: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
-                out TransitiveRxReferenceViaLibrary tr) && tr.ReferencesNewRxVersion),
+                out var tr) && tr.ReferencesNewRxVersion),
             transitiveRefToNewRxLegacyFacade: false, // Currently we don't have a way to make this happen.
 
             transitiveRefToNewRxUiPackages: deps.Any(d =>
-                d.TryGetTransitiveRxReferenceViaLibrary(out TransitiveRxReferenceViaLibrary tr)
+                d.TryGetTransitiveRxReferenceViaLibrary(out var tr)
                     && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature
                     && tr.ReferencesNewRxVersion),
             transitiveRefUsesRxUiFeatures: deps.Any(d => d.TryGetTransitiveRxReferenceViaLibrary(
-                out TransitiveRxReferenceViaLibrary tr) && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature),
+                out var tr) && tr.HasWindowsTargetUsingUiFrameworkSpecificRxFeature),
 
             useWpf: useWpfAndWindowsForms,
             useWindowsForms: useWpfAndWindowsForms,
@@ -356,7 +356,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
 
         if (deps.FirstOrDefault(d => d.TryGetTransitiveRxReferenceViaLibrary(out _)) is RxDependency trd)
         {
-            TransitiveRxReferenceViaLibrary tr = (TransitiveRxReferenceViaLibrary)trd;
+            var tr = (TransitiveRxReferenceViaLibrary)trd;
             result = result.WithTransitiveLibraryTfms(tr.Tfms);
         }
 

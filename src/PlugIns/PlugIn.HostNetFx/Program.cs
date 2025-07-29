@@ -13,21 +13,21 @@ namespace PlugIn.HostNetFx
     internal class Program
     {
 #if DEBUG
-        const string Configuration = "Debug";
+        private const string Configuration = "Debug";
 #else
         const string Configuration = "Release";
 #endif
 
         [STAThread]
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             if (args.Length != 2)
             {
                 Console.Error.WriteLine("Usage: PlugIn.HostNetFx <firstPlugInDllPath> <secondPlugInDllPath>");
                 return 1;
             }
-            string firstPlugInPath = args[0];
-            string secondPlugInPath = args[1];
+            var firstPlugInPath = args[0];
+            var secondPlugInPath = args[1];
 
             //while (!Debugger.IsAttached)
             //{
@@ -37,8 +37,8 @@ namespace PlugIn.HostNetFx
             //Debugger.Break();
 
 
-            HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugInPath);
-            HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugInPath);
+            var result1 = ExecutePlugIn(firstPlugInPath);
+            var result2 = ExecutePlugIn(secondPlugInPath);
             if (result1 is null || result2 is null)
             {
                 return 1;
@@ -56,11 +56,11 @@ namespace PlugIn.HostNetFx
 
         private static HostOutput.PlugInResult? ExecutePlugIn(string plugInDllPath)
         {
-            Assembly plugin = Assembly.LoadFrom(plugInDllPath);
+            var plugin = Assembly.LoadFrom(plugInDllPath);
             
-            Type pluginType = plugin.GetType($"PlugInTest.PlugInEntryPoint");
+            var pluginType = plugin.GetType($"PlugInTest.PlugInEntryPoint");
 
-            object o = plugin.CreateInstance($"PlugInTest.PlugInEntryPoint");
+            var o = plugin.CreateInstance($"PlugInTest.PlugInEntryPoint");
             if (o == null)
             {
                 Console.Error.WriteLine($"Failed to create instance of {pluginType.FullName}");

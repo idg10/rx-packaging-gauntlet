@@ -16,7 +16,7 @@ internal class RunDeploymentBloatCheck
     public static async Task<Issue1745TestRun> RunAsync(string testRunId, OffsetDateTime testRunDateTime, Scenario scenario, string? packageSource)
     {
         Console.WriteLine(scenario);
-        string tfm = scenario.WindowsVersion is string windowsVersion
+        var tfm = scenario.WindowsVersion is string windowsVersion
             ? $"{scenario.BaseNetTfm}-{windowsVersion}"
             : scenario.BaseNetTfm;
 
@@ -36,9 +36,9 @@ internal class RunDeploymentBloatCheck
                 scenario.EmitDisableTransitiveFrameworkReferences),
                 packageSource is not null ? [("loc", packageSource)] : null))
         {
-            BuildOutput buildResult = await projectClone.RunDotnetPublish("Bloat.ConsoleWinRtTemplate.csproj");
+            var buildResult = await projectClone.RunDotnetPublish("Bloat.ConsoleWinRtTemplate.csproj");
 
-            (bool includesWpf, bool includesWindowsForms) = buildResult.CheckForUiComponentsInOutput();
+            (var includesWpf, var includesWindowsForms) = buildResult.CheckForUiComponentsInOutput();
 
             Console.WriteLine($"WPF: {includesWpf}");
             Console.WriteLine($"Windows Forms: {includesWindowsForms}");
@@ -47,7 +47,7 @@ internal class RunDeploymentBloatCheck
             // Note: currently this test run has no specialized config so the schema generation
             // doesn't create a type to represent issue1745TestRunConfig. That's why we use
             // the common TestRunConfigWithUiFrameworkSettings here.
-            NuGetPackage rxVersionPackage = NuGetPackage.Create(
+            var rxVersionPackage = NuGetPackage.Create(
                 id: scenario.RxMainPackage.PackageId,
                 version: scenario.RxMainPackage.Version,
                 packageSource: packageSource.AsNullableJsonString());
@@ -74,7 +74,7 @@ internal class RunDeploymentBloatCheck
         }
     }
 
-    static void RewriteProjectXmlDocument(
+    private static void RewriteProjectXmlDocument(
         ProjectFileRewriter project,
         string tfm,
         PackageIdAndVersion[] replaceSystemReactiveWith,

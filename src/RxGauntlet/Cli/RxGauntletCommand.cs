@@ -13,11 +13,11 @@ internal abstract class RxGauntletCommandBase<TSettings> : AsyncCommand<TSetting
 
     public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings)
     {
-        TestRunPackageSelection[] packageSelections = GetPackageSelection(settings);
+        var packageSelections = GetPackageSelection(settings);
 
-        TestType[] testTypes = TestType.All;
+        var testTypes = TestType.All;
 
-        DateTimeOffset testRunDateTime = DateTimeOffset.UtcNow;
+        var testRunDateTime = DateTimeOffset.UtcNow;
         string outputFolder;
         if (settings.OutputDirectory is not null)
         {
@@ -30,7 +30,7 @@ internal abstract class RxGauntletCommandBase<TSettings> : AsyncCommand<TSetting
                 testRunDateTime.ToString("yyyy-MM-dd_HH-mm-ss"));
             Console.WriteLine($"Output folder: {outputFolder}");
         }
-        string testId = settings.TestId ?? testRunDateTime.ToString("yyyy-MM-dd_HH-mm-ss-") + System.Security.Cryptography.RandomNumberGenerator.GetHexString(8);
+        var testId = settings.TestId ?? testRunDateTime.ToString("yyyy-MM-dd_HH-mm-ss-") + System.Security.Cryptography.RandomNumberGenerator.GetHexString(8);
 
         try
         {
@@ -39,7 +39,7 @@ internal abstract class RxGauntletCommandBase<TSettings> : AsyncCommand<TSetting
                 packageSelections,
                 outputFolder,
                 testId);
-            int result = await runner.RunAsync();
+            var result = await runner.RunAsync();
 
             return result;
         }

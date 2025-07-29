@@ -35,11 +35,11 @@ public partial class TargetFrameworkMonikerParser
         string targetFrameworkMoniker, out int majorVersion, out int minorVersionAsTwoDigitNumber)
     {
         ReadOnlySpan<char> tfm = targetFrameworkMoniker;
-        int length = targetFrameworkMoniker.Length;
+        var length = targetFrameworkMoniker.Length;
         if (!tfm.StartsWith("net") ||
             (length < 5) || (length > 6) ||
             !char.IsDigit(tfm[3]) ||
-            !int.TryParse(tfm[4..], out int minorVersion))
+            !int.TryParse(tfm[4..], out var minorVersion))
         {
             majorVersion = minorVersionAsTwoDigitNumber = 0;
             return false;
@@ -80,10 +80,10 @@ public partial class TargetFrameworkMonikerParser
         string targetFrameworkMoniker, out int majorVersion, out int minorVersionAsTwoDigitNumber, out string? os, out string? osVersion)
     {
         os = osVersion = null;
-        Match match = DotnetTfmRegex.Match(targetFrameworkMoniker);
+        var match = DotnetTfmRegex.Match(targetFrameworkMoniker);
         if (!match.Success ||
             !int.TryParse(match.Groups["major"].Value, out majorVersion) ||
-            !int.TryParse(match.Groups["minor"].Value, out int minorVersion))
+            !int.TryParse(match.Groups["minor"].Value, out var minorVersion))
         {
             majorVersion = minorVersionAsTwoDigitNumber = 0;
             return false;

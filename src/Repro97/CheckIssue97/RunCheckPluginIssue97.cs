@@ -22,15 +22,15 @@ internal class RunCheckPluginIssue97
         string testRunId, OffsetDateTime testRunDateTime, Utf8JsonWriter jsonWriter, PackageIdAndVersion[] packages, string? packageSource)
     {
         using PlugInHost plugInHost = new();
-        foreach (Scenario scenario in await PlugInTargetSelection.GetPlugInTfmPairingsAsync(packages, packageSource))
+        foreach (var scenario in await PlugInTargetSelection.GetPlugInTfmPairingsAsync(packages, packageSource))
         {
             Console.WriteLine(scenario);
 
-            string hostRuntimeTfm = scenario.HostTfm;
-            PlugInDescriptor firstPlugIn = scenario.FirstPlugIn;
-            PlugInDescriptor secondPlugIn = scenario.SecondPlugIn;
+            var hostRuntimeTfm = scenario.HostTfm;
+            var firstPlugIn = scenario.FirstPlugIn;
+            var secondPlugIn = scenario.SecondPlugIn;
 
-            HostOutput output = await plugInHost.Run(
+            var output = await plugInHost.Run(
                 hostRuntimeTfm,
                 firstPlugIn,
                 secondPlugIn,
@@ -46,7 +46,7 @@ internal class RunCheckPluginIssue97
                     catch (JsonException x)
                     {
                         stdOutCopy.Seek(0, SeekOrigin.Begin);
-                        string stdOutContent = await new StreamReader(stdOutCopy).ReadToEndAsync();
+                        var stdOutContent = await new StreamReader(stdOutCopy).ReadToEndAsync();
                         Console.Error.WriteLine($"Error deserializing output for {hostRuntimeTfm} {firstPlugIn.RxPackages[0]} {firstPlugIn.TargetFrameworkMoniker} and {secondPlugIn.TargetFrameworkMoniker} {secondPlugIn.TargetFrameworkMoniker}: {x.Message}");
                         Console.Error.WriteLine("Output:");
                         Console.Error.WriteLine(stdOutContent);

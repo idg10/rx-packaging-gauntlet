@@ -2,12 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT License.
 // See the LICENSE file in the project root for more information.
 
+using System.Text.Json;
+
 using RxGauntlet.CommandLine;
-using RxGauntlet.LogModel;
 
 using Spectre.Console.Cli;
-
-using System.Text.Json;
 
 namespace CheckIssue1745;
 
@@ -15,41 +14,41 @@ internal class CheckDeploymentBloatCommand : TestCommandBase<TestSettings>
 {
     protected override string DefaultOutputFilename => "CheckIssue1745.json";
 
-    private static readonly string[] baseNetTfms =
+    private static readonly string[] BaseNetTfms =
     [
         //"net6.0",
         "net8.0",
         "net9.0"
     ];
 
-    private static readonly string[] windowsVersions =
+    private static readonly string[] WindowsVersions =
     [
         "windows10.0.18362.0",
         "windows10.0.19041.0",
         "windows10.0.22000.0"
     ];
 
-    private static readonly bool?[] boolsWithNull = [null, true, false];
-    private static readonly bool[] bools = [true, false];
+    private static readonly bool?[] BoolsWithNull = [null, true, false];
+    private static readonly bool[] Bools = [true, false];
 
     protected override async Task<int> ExecuteTestAsync(
         TestDetails testDetails, CommandContext context, TestSettings settings, Utf8JsonWriter jsonWriter)
     {
         jsonWriter.WriteStartArray();
 
-        IEnumerable<Scenario> scenarios =
-            from baseNetTfm in baseNetTfms
-            from windowsVersion in windowsVersions
-            from useWpf in boolsWithNull
-            from useWindowsForms in boolsWithNull
-            from useTransitiveFrameworksWorkaround in bools
+        var scenarios =
+            from baseNetTfm in BaseNetTfms
+            from windowsVersion in WindowsVersions
+            from useWpf in BoolsWithNull
+            from useWindowsForms in BoolsWithNull
+            from useTransitiveFrameworksWorkaround in Bools
             select new Scenario(baseNetTfm, windowsVersion, useWpf, useWindowsForms, useTransitiveFrameworksWorkaround, settings.RxMainPackageParsed, settings.PackageSource);
 
-        foreach (Scenario scenario in scenarios)
+        foreach (var scenario in scenarios)
         {
             try
             {
-                Issue1745TestRun result = await RunDeploymentBloatCheck.RunAsync(
+                var result = await RunDeploymentBloatCheck.RunAsync(
                     testDetails.TestRunId, testDetails.TestRunDateTime, scenario, settings.PackageSource);
                 result.WriteTo(jsonWriter);
                 jsonWriter.Flush();

@@ -40,6 +40,6 @@ namespace RxGauntlet.Cli;
 /// </remarks>
 internal interface IOrchestrationCommandSettings
 {
-    string? OutputDirectory { get; }
+    public string? OutputDirectory { get; }
     public string? TestId { get;  }
 }

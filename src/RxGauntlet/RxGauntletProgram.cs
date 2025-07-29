@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using RxGauntlet.Cli;
-using RxGauntlet.CommandLine;
 
 using Spectre.Console.Cli;
 

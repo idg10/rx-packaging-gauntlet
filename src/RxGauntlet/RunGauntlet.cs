@@ -51,36 +51,36 @@ internal class RunGauntlet(
     {
         Console.WriteLine(typeAndPackageSelection);
 
-        TestType testType = typeAndPackageSelection.Type;
-        string testRunnerExecutableFolder = Path.GetFullPath(Path.Combine(
+        var testType = typeAndPackageSelection.Type;
+        var testRunnerExecutableFolder = Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory,
             $@"..\..\..\..\{testType.SrcFolderRelativePath}\bin\{Configuration}\net9.0\"));
-        string testRunnerExecutablePath = Path.Combine(
+        var testRunnerExecutablePath = Path.Combine(
             testRunnerExecutableFolder,
             testType.ExecutableName);
 
-        string uiPackageArguments = string.Join(
+        var uiPackageArguments = string.Join(
             " ",
             typeAndPackageSelection.PackageSelection.RxUiPackages.Select(package =>
                 $"--rx-package {package.PackageId},{package.Version} " +
                 $""));
 
         uiPackageArguments = uiPackageArguments == "" ? "" : " " + uiPackageArguments; // Add space where necessary
-        PackageIdAndVersion mainRxPackage = typeAndPackageSelection.PackageSelection.MainRxPackage;
-        string packageArguments = $"--rx-main-package {mainRxPackage.PackageId},{mainRxPackage.Version}{uiPackageArguments}";
+        var mainRxPackage = typeAndPackageSelection.PackageSelection.MainRxPackage;
+        var packageArguments = $"--rx-main-package {mainRxPackage.PackageId},{mainRxPackage.Version}{uiPackageArguments}";
         packageArguments = typeAndPackageSelection.PackageSelection.LegacyRxPackage is PackageIdAndVersion legacyRxPackage
             ? $"{packageArguments} --rx-legacy-package {legacyRxPackage.PackageId},{legacyRxPackage.Version}"
             : packageArguments;
-        string customFeedArgumentIfRequired = typeAndPackageSelection.PackageSelection.CustomPackageSource is string packageSource
+        var customFeedArgumentIfRequired = typeAndPackageSelection.PackageSelection.CustomPackageSource is string packageSource
             ? $" --package-source {packageSource}"
             : string.Empty;
-        string testIdArgument = $" --test-id {testId}";
+        var testIdArgument = $" --test-id {testId}";
 
-        string outputBaseName = Path.GetFileNameWithoutExtension(testType.OutputName);
-        string outputExtension = Path.GetExtension(testType.OutputName);
-        string outputForThisPackageSelection = $"{outputBaseName}-{typeAndPackageSelection.PackageSelection.MainRxPackage.PackageId}-{typeAndPackageSelection.PackageSelection.MainRxPackage.Version}{outputExtension}";
-        string outputPath = Path.Combine(outputFolder, outputForThisPackageSelection);
-        string outputArgument = $" --output {outputPath}";
+        var outputBaseName = Path.GetFileNameWithoutExtension(testType.OutputName);
+        var outputExtension = Path.GetExtension(testType.OutputName);
+        var outputForThisPackageSelection = $"{outputBaseName}-{typeAndPackageSelection.PackageSelection.MainRxPackage.PackageId}-{typeAndPackageSelection.PackageSelection.MainRxPackage.Version}{outputExtension}";
+        var outputPath = Path.Combine(outputFolder, outputForThisPackageSelection);
+        var outputArgument = $" --output {outputPath}";
         var startInfo = new ProcessStartInfo
         {
             FileName = testRunnerExecutablePath,

@@ -8,14 +8,14 @@ namespace RxGauntlet.Build;
 
 public sealed class ModifiedProjectClone : IDisposable
 {
-    private readonly string copyPath;
+    private readonly string _copyPath;
 
     private ModifiedProjectClone(string copyPath)
     {
-        this.copyPath = copyPath;
+        _copyPath = copyPath;
     }
 
-    public string ClonedProjectFolderPath => copyPath;
+    public string ClonedProjectFolderPath => _copyPath;
 
     public static ModifiedProjectClone Create(
         string sourceProjectFolder,
@@ -23,7 +23,7 @@ public sealed class ModifiedProjectClone : IDisposable
         Action<ProjectFileRewriter> modifyProjectFile,
         (string FeedName, string FeedLocation)[]? additionalPackageSources)
     {
-        string copyPath = Path.Combine(
+        var copyPath = Path.Combine(
             Path.GetTempPath(),
             "RxGauntlet",
             copyParentFolderName,
@@ -34,11 +34,11 @@ public sealed class ModifiedProjectClone : IDisposable
         ModifiedProjectClone? clone = new(copyPath);
         try
         {
-            foreach (string file in Directory.GetFiles(sourceProjectFolder))
+            foreach (var file in Directory.GetFiles(sourceProjectFolder))
             {
-                string extension = Path.GetExtension(file).ToLowerInvariant();
-                string relativePath = Path.GetRelativePath(sourceProjectFolder, file);
-                string destinationPath = Path.Combine(copyPath, relativePath);
+                var extension = Path.GetExtension(file).ToLowerInvariant();
+                var relativePath = Path.GetRelativePath(sourceProjectFolder, file);
+                var destinationPath = Path.Combine(copyPath, relativePath);
 
                 switch (extension)
                 {
@@ -47,7 +47,7 @@ public sealed class ModifiedProjectClone : IDisposable
                         break;
 
                     case ".csproj":
-                        ProjectFileRewriter projectFileRewriter = ProjectFileRewriter.CreateForCsProj(file);
+                        var projectFileRewriter = ProjectFileRewriter.CreateForCsProj(file);
                         modifyProjectFile(projectFileRewriter);
                         projectFileRewriter.WriteModified(destinationPath);
                         break;
@@ -57,9 +57,9 @@ public sealed class ModifiedProjectClone : IDisposable
             if (additionalPackageSources is not null && additionalPackageSources.Length > 0)
             {
                 // We need to emit a NuGet.config file, because the arguments specified one or more custom package sources
-                string sources = string.Join(Environment.NewLine, additionalPackageSources.Select(
+                var sources = string.Join(Environment.NewLine, additionalPackageSources.Select(
                     p => $"""    <add key="{p.FeedName}" value="{p.FeedLocation}" />"""));
-                string nuGetConfigContent = $"""
+                var nuGetConfigContent = $"""
                             <?xml version="1.0" encoding="utf-8"?>
                             <configuration>
                               <packageSources>
@@ -78,7 +78,7 @@ public sealed class ModifiedProjectClone : IDisposable
             // We're now going to return without error, so we no longer want the finally block
             // to delete the directory. That will now happen when the caller calls Dispose on
             // the ModifiedProjectClone we return..
-            ModifiedProjectClone result = clone;
+            var result = clone;
             clone = null;
             return result; 
         }
@@ -98,9 +98,9 @@ public sealed class ModifiedProjectClone : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(copyPath))
+        if (Directory.Exists(_copyPath))
         {
-            Directory.Delete(copyPath, true);
+            Directory.Delete(_copyPath, true);
         }
     }
 
@@ -121,7 +121,7 @@ public sealed class ModifiedProjectClone : IDisposable
 
     private async Task<BuildOutput> RunDotnetCommonBuild(string command, string csProjName)
     {
-        string args = $"{command} -c Release {csProjName}";
+        var args = $"{command} -c Release {csProjName}";
         var startInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
@@ -131,14 +131,14 @@ public sealed class ModifiedProjectClone : IDisposable
             // Comment this out to see the output in the console window
             //CreateNoWindow = true,
             Arguments = args,
-            WorkingDirectory = copyPath,
+            WorkingDirectory = _copyPath,
         };
 
         using var process = new Process { StartInfo = startInfo };
         process.Start();
-        Task<string> stdOutTask = Task.Run(process.StandardOutput.ReadToEndAsync);
-        Task processTask = process.WaitForExitAsync();
-        Task firstToFinish = await Task.WhenAny(processTask, stdOutTask);
+        var stdOutTask = Task.Run(process.StandardOutput.ReadToEndAsync);
+        var processTask = process.WaitForExitAsync();
+        var firstToFinish = await Task.WhenAny(processTask, stdOutTask);
 
         if (!stdOutTask.IsCompleted)
         {
@@ -151,10 +151,10 @@ public sealed class ModifiedProjectClone : IDisposable
         {
             throw new InvalidOperationException("Did not get output from program");
         }
-        string stdOut = await stdOutTask;
+        var stdOut = await stdOutTask;
 
         await processTask;
-        string outputFolder = Path.Combine(ClonedProjectFolderPath, "bin", "Release");
+        var outputFolder = Path.Combine(ClonedProjectFolderPath, "bin", "Release");
         return new BuildOutput(process.ExitCode, outputFolder, stdOut);
     }
 }

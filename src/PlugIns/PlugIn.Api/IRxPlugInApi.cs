@@ -14,5 +14,5 @@ public interface IRxPlugInApi
 
     public RxCancellationFlowBehaviour GetRxCancellationFlowBehaviour();
 
-    bool IsWindowsFormsSupportAvailable();
+    public bool IsWindowsFormsSupportAvailable();
 }

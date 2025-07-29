@@ -14,8 +14,8 @@ if (args is not [string firstPlugInPath, string secondPlugInPath])
     return 1;
 }
 
-HostOutput.PlugInResult? result1 = ExecutePlugIn(firstPlugInPath);
-HostOutput.PlugInResult? result2 = ExecutePlugIn(secondPlugInPath);
+var result1 = ExecutePlugIn(firstPlugInPath);
+var result2 = ExecutePlugIn(secondPlugInPath);
 if (result1 is null || result2 is null)
 {
     return 1;
@@ -33,7 +33,7 @@ return 0;
 static HostOutput.PlugInResult? ExecutePlugIn(string plugInDllPath)
 {
     PlugInLoadContext plugInLoadContext = new(plugInDllPath);
-    Assembly plugin = plugInLoadContext.LoadFromAssemblyPath(plugInDllPath);
+    var plugin = plugInLoadContext.LoadFromAssemblyPath(plugInDllPath);
 
     if (plugin.GetType($"PlugInTest.PlugInEntryPoint") is not Type pluginType)
     {        

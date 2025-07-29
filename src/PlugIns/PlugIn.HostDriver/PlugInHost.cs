@@ -13,7 +13,7 @@ namespace PlugIn.HostDriver;
 public sealed class PlugInHost : IDisposable
 {
 #if DEBUG
-    const string Configuration = "Debug";
+    private const string Configuration = "Debug";
 #else
         const string Configuration = "Release";
 #endif
@@ -94,14 +94,14 @@ public sealed class PlugInHost : IDisposable
             throw new DirectoryNotFoundException($"PlugIns folder not found: {plugInsFolder.FullName}");
         }
 
-        string plugInHostProjectFolder = Path.Combine(
+        var plugInHostProjectFolder = Path.Combine(
             plugInsFolder.FullName,
             launcher);
         if (!Directory.Exists(plugInHostProjectFolder))
         {
             throw new DirectoryNotFoundException($"PlugIn host project folder not found at {plugInHostProjectFolder}");
         }
-        string plugInHostExecutableFolder = Path.Combine(
+        var plugInHostExecutableFolder = Path.Combine(
             plugInHostProjectFolder,
             $"bin/{Configuration}/{hostRuntimeTfm}/");
         if (!Directory.Exists(plugInHostExecutableFolder))
@@ -109,7 +109,7 @@ public sealed class PlugInHost : IDisposable
             throw new DirectoryNotFoundException($"PlugIn host build output folder not found at {plugInHostExecutableFolder}");
         }
 
-        string plugInHostExecutablePath = Path.Combine(
+        var plugInHostExecutablePath = Path.Combine(
             plugInHostExecutableFolder,
             $"{launcher}.exe");
         if (!File.Exists(plugInHostExecutablePath))
@@ -117,8 +117,8 @@ public sealed class PlugInHost : IDisposable
             throw new FileNotFoundException($"PlugIn host executable not found at {plugInHostExecutablePath}");
         }
 
-        string firstPlugInPath = await _plugInBuilder.GetPlugInDllPathAsync(firstPlugIn);
-        string secondPlugInPath = await _plugInBuilder.GetPlugInDllPathAsync(secondPlugIn);
+        var firstPlugInPath = await _plugInBuilder.GetPlugInDllPathAsync(firstPlugIn);
+        var secondPlugInPath = await _plugInBuilder.GetPlugInDllPathAsync(secondPlugIn);
 
         var startInfo = new ProcessStartInfo
         {
@@ -134,9 +134,9 @@ public sealed class PlugInHost : IDisposable
         process.Start();
 
         // Pass the StandardOutput stream to the provided function
-        Task<TResult> resultTask = stdOutStreamToResult(process.StandardOutput.BaseStream);
-        Task processTask = process.WaitForExitAsync();
-        Task firstToFinish = await Task.WhenAny(processTask, resultTask);
+        var resultTask = stdOutStreamToResult(process.StandardOutput.BaseStream);
+        var processTask = process.WaitForExitAsync();
+        var firstToFinish = await Task.WhenAny(processTask, resultTask);
 
         if (process.HasExited && process.ExitCode != 0)
         {

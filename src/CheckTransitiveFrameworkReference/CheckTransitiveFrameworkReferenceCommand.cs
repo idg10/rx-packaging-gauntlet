@@ -35,10 +35,10 @@ internal class CheckTransitiveFrameworkReferenceCommand : TestCommandBase<TestSe
             settings.RxLegacyPackageParsed,
             settings.RxUiFrameworkPackagesParsed,
             settings.PackageSource is string packageSource ? [("loc", packageSource)] : null);
-        List<Scenario> scenarios = Scenario.GetScenarios().ToList();
-        for (int i = 0; i < scenarios.Count; i++)
+        var scenarios = Scenario.GetScenarios().ToList();
+        for (var i = 0; i < scenarios.Count; i++)
         {
-            Scenario? scenario = scenarios[i];
+            var scenario = scenarios[i];
             Console.WriteLine(scenario);
 
             // I'd like to do a progress bar on the TaskBar, but it seems there aren't good libraries
@@ -56,7 +56,7 @@ internal class CheckTransitiveFrameworkReferenceCommand : TestCommandBase<TestSe
             {
             }
 
-            RxGauntlet.LogModel.TransitiveFrameworkReferenceTestRun testResult = await runCheck.RunScenarioAsync(scenario);
+            var testResult = await runCheck.RunScenarioAsync(scenario);
 
             testResult.WriteTo(jsonWriter);
             await jsonWriter.FlushAsync();

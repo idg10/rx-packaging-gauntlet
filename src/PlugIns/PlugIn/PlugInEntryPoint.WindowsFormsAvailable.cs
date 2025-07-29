@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information. 
 
 using System.Reactive.Linq;
-using System.Reflection;
 
 namespace PlugInTest
 {
@@ -31,7 +30,7 @@ namespace PlugInTest
         {
             // Using typeof(Observable) means that when the CLR JIT compiles this method, it will
             // have to resolve the System.Reactive assembly.
-            Assembly asm = typeof(Observable).Assembly;
+            var asm = typeof(Observable).Assembly;
 
             // We look for Windows Forms support using reflection because this source file gets
             // compiled into multiple plug-in projects, some of which will resolve to the
@@ -85,7 +84,7 @@ namespace PlugInTest
             // Rx 3.0 days.
             // So although Rx 5.0 effectively reintroduced the problem that Rx 3.0 had fixed, it
             // was less of a problem than it had been before.
-            Type cs = asm.GetType("System.Reactive.Concurrency.ControlScheduler")!;
+            var cs = asm.GetType("System.Reactive.Concurrency.ControlScheduler")!;
             return cs != null;
         }
     }

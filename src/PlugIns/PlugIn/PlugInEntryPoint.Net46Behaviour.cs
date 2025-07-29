@@ -43,7 +43,7 @@ namespace PlugInTest
             // it to be or whether something else got in there first.
 
             var cancel = new CancellationTokenSource();
-            Task t = Observable.Timer(TimeSpan.FromSeconds(0.2))
+            var t = Observable.Timer(TimeSpan.FromSeconds(0.2))
                 .ForEachAsync(_ =>
                 {
                 }, cancel.Token);
@@ -56,8 +56,8 @@ namespace PlugInTest
             }
             catch (AggregateException ae)
             {
-                OperationCanceledException ocx = (OperationCanceledException) ae.InnerException!;
-                bool cancelledExceptionIsAssociatedWithTokenPassedToRx = ocx.CancellationToken.Equals(cancel.Token);
+                var ocx = (OperationCanceledException) ae.InnerException!;
+                var cancelledExceptionIsAssociatedWithTokenPassedToRx = ocx.CancellationToken.Equals(cancel.Token);
                 return cancelledExceptionIsAssociatedWithTokenPassedToRx
                     ? RxCancellationFlowBehaviour.FlowedToOperationCanceledException
                     : RxCancellationFlowBehaviour.NotFlowedToOperationCanceledException;

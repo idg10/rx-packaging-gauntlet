@@ -21,7 +21,7 @@ public static class RxLib
         _ = Dispatcher.CurrentDispatcher;
 
         Console.WriteLine($"Rx WPF (via lib): {typeof(DispatcherScheduler).Assembly.FullName}");
-        IDisposable result = DispatcherScheduler.Current.Schedule(
+        var result = DispatcherScheduler.Current.Schedule(
             default(object),
             (s_, _) =>
             {
@@ -52,7 +52,7 @@ public static class RxLib
         // there's no particular guarantee of when it will run. For normal apps that's typically
         // fine, but it's not helpful for a console app that runs some simple tests and then
         // immediately exits.)
-        IDisposable result = CurrentThreadScheduler.Instance.Schedule(
+        var result = CurrentThreadScheduler.Instance.Schedule(
             default(object),
             (cs, _) =>
             {

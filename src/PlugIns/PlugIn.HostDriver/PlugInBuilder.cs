@@ -47,7 +47,7 @@ public sealed class PlugInBuilder : IDisposable
     /// </remarks>
     public async Task<string> GetPlugInDllPathAsync(PlugInDescriptor plugInDescriptor)
     {
-        if (!_plugInProjects.TryGetValue(plugInDescriptor, out GeneratedProject? project))
+        if (!_plugInProjects.TryGetValue(plugInDescriptor, out var project))
         {
             project = await CreateProjectForPlugIn(plugInDescriptor);
             _plugInProjects.Add(plugInDescriptor, project);
@@ -67,8 +67,8 @@ public sealed class PlugInBuilder : IDisposable
     {
         // Give each distinct framework/rx version a different assembly name, because the
         // .NET Fx plug-in host will only ever load the first assembly with any particular name.
-        string simplifiedRxVersion = plugInDescriptor.RxPackages[0].Version.Replace(".", "")[..2];
-        string assemblyName = $"PlugIn.{plugInDescriptor.TargetFrameworkMoniker}.Rx{simplifiedRxVersion}";
+        var simplifiedRxVersion = plugInDescriptor.RxPackages[0].Version.Replace(".", "")[..2];
+        var assemblyName = $"PlugIn.{plugInDescriptor.TargetFrameworkMoniker}.Rx{simplifiedRxVersion}";
         var projectClone = ModifiedProjectClone.Create(
             PlugInTemplateProjectFolder,
             PlugInTempFolderName,
@@ -87,7 +87,7 @@ public sealed class PlugInBuilder : IDisposable
 
     public void Dispose()
     {
-        foreach (GeneratedProject projectClone in _plugInProjects.Values)
+        foreach (var projectClone in _plugInProjects.Values)
         {
             projectClone.Project.Dispose();
         }

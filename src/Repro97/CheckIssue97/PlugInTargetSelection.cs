@@ -17,7 +17,7 @@ namespace CheckIssue97;
 
 internal class PlugInTargetSelection
 {
-    private static readonly string[] hostRuntimes =
+    private static readonly string[] HostRuntimes =
     [
         "net462",
         "net472",
@@ -25,7 +25,7 @@ internal class PlugInTargetSelection
         "net8.0"
     ];
 
-    private static readonly string[] everyTfmWeAreConsidering =
+    private static readonly string[] EveryTfmWeAreConsidering =
         [
             "net11",
             "net20",
@@ -85,8 +85,8 @@ internal class PlugInTargetSelection
         // there are no pairings because we needed only the net8.0 plug-in, and since we never pair a plug-in with
         // itself, there are no pairings.
 
-        string mainPackageId = packages[0].PackageId;
-        string mainPackageVersion = packages[0].Version;
+        var mainPackageId = packages[0].PackageId;
+        var mainPackageVersion = packages[0].Version;
 
         var source = packageSource ?? "https://api.nuget.org/v3/index.json";
         var logger = NullLogger.Instance;
@@ -100,7 +100,7 @@ internal class PlugInTargetSelection
         // it's straightforward, but when we have multiple packages, typically the UI packages support
         // a narrower set.
         Dictionary<PackageIdAndVersion, List<NuGetFramework>> frameworksByPackage = new();
-        foreach (PackageIdAndVersion package in packages)
+        foreach (var package in packages)
         {
             using var packageStream = new MemoryStream();
             if (!await resource.CopyNupkgToStreamAsync(
@@ -120,9 +120,9 @@ internal class PlugInTargetSelection
             // the other target frameworks - this just seems to afflict the netstandard targets.
             // These cause PackageArchiveReader to report these as belonging to an 'Any' framework, which
             // does not accurately represent what the package actually offers, so we strip these out.
-            IEnumerable<FrameworkSpecificGroup> libItemsExcludingBogusFolderEntries = reader.GetLibItems()
+            var libItemsExcludingBogusFolderEntries = reader.GetLibItems()
                 .Where(x => x.Items.All(item => item.Split('/') is [.., string final] && final.Length > 0));
-            List<NuGetFramework> packageFrameworks = libItemsExcludingBogusFolderEntries
+            var packageFrameworks = libItemsExcludingBogusFolderEntries
                 .Select(x => x.TargetFramework)
                 .Where(fx => fx is not null)
                 .Distinct()
@@ -146,12 +146,12 @@ internal class PlugInTargetSelection
         // and ask the NuGet library which Rx target it would select, seems to work well enough.
 
         List<Scenario> results = [];
-        foreach (string hostRuntimeTfm in hostRuntimes)
+        foreach (var hostRuntimeTfm in HostRuntimes)
         {
             // Assuming we're running on a supported version of Windows 11 or later. This ensures that when we get to
             // plugins with OS-specific TFMs, the host runtime version comes out as higher than or equal to the plugin TFM
             // in cases where they match on major and minor versions.
-            string effectiveHostTfm = TargetFrameworkMonikerParser.TryParseNetFxMoniker(hostRuntimeTfm, out _, out _)
+            var effectiveHostTfm = TargetFrameworkMonikerParser.TryParseNetFxMoniker(hostRuntimeTfm, out _, out _)
                 ? hostRuntimeTfm
                 : $"{hostRuntimeTfm}-windows10.0.22631";
 
@@ -159,7 +159,7 @@ internal class PlugInTargetSelection
 
             // This filters out Rx targets where none of the TFMs we could use in the plug-ins to select
             // that target are compatible with the host runtime.
-            var plugInTfmsCompatibleWithHostRuntime = everyTfmWeAreConsidering
+            var plugInTfmsCompatibleWithHostRuntime = EveryTfmWeAreConsidering
                 .Select(NuGetFramework.Parse)
                 .Where(item => reducer.GetNearest(hostFramework, [item]) is not null);
             var plugInTfmsWithNearestRxMatch = plugInTfmsCompatibleWithHostRuntime
@@ -186,7 +186,7 @@ internal class PlugInTargetSelection
                     return result;
                 });
 
-            Dictionary<string, List<NuGetFramework>> plugInTfmsBySelectedRxTarget = plugInTfmsWithNearestRxMatch
+            var plugInTfmsBySelectedRxTarget = plugInTfmsWithNearestRxMatch
                 .GroupBy(item => item.RxTfm)
                 .ToDictionary(
                     g => g.Key,
@@ -222,7 +222,7 @@ internal class PlugInTargetSelection
             }
             else
             {
-                foreach ((string key, List<NuGetFramework> plugInTfms) in plugInTfmsBySelectedRxTarget)
+                foreach ((var key, var plugInTfms) in plugInTfmsBySelectedRxTarget)
                 {
                     // We could just do this to let NuGet pick which it thinks is the best of the available TFMs for
                     // the host runtime:
@@ -232,7 +232,7 @@ internal class PlugInTargetSelection
                     // Back when we did all this by hand, we chose net462 as the plug-in TFM that resolved to netstandard2.0.
                     // More generally, we prefer the oldest TFM that works. (This whole test scenario is essentially recreating
                     // legacy setups so the older TFMs usually better reflect the real-life scenarios these tests represent.)
-                    NuGetFramework? candidate = plugInTfms
+                    var candidate = plugInTfms
                         .Select(plugInTfm => reducer.GetNearest(hostFramework, [plugInTfm]))
                         .FirstOrDefault(framework => framework is not null);
                     if (candidate is not null)
