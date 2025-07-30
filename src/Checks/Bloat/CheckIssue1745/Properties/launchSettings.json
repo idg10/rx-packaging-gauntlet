@@ -1,7 +1,8 @@
 {
   "profiles": {
-    "CheckIssue1745": {
-      "commandName": "Project"
+    "Rx 6.0.1": {
+      "commandName": "Project",
+      "commandLineArgs": "--rx-main-package System.Reactive,6.0.1"
     },
     "As Orchestrated": {
       "commandName": "Project",

@@ -26,7 +26,7 @@ internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : Test
         PackageIdAndVersion[] replaceSystemReactiveWith = [settings.RxMainPackageParsed];
 
         var templateProjectFolder =
-            Path.Combine(AppContext.BaseDirectory, "../../../../ExtensionMethods/ExtensionMethods.DisableTransitiveWorkaroundFail/");
+            Path.Combine(AppContext.BaseDirectory, "../../../../ExtensionMethods.DisableTransitiveWorkaroundFail/");
 
         string[] baseNetTfms = ["net8.0"];
         string?[] windowsVersions = [null, "windows10.0.19041.0"];

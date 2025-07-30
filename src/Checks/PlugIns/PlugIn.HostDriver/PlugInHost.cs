@@ -88,7 +88,7 @@ public sealed class PlugInHost : IDisposable
         }
 
         DirectoryInfo plugInsFolder = new(
-            Path.Combine(AppContext.BaseDirectory, "../../../../../PlugIns/"));
+            Path.Combine(AppContext.BaseDirectory, "../../../../"));
         if (!plugInsFolder.Exists)
         {
             throw new DirectoryNotFoundException($"PlugIns folder not found: {plugInsFolder.FullName}");

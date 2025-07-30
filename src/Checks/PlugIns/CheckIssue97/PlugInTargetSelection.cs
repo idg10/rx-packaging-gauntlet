@@ -22,7 +22,8 @@ internal class PlugInTargetSelection
         "net462",
         "net472",
         "net481",
-        "net8.0"
+        "net8.0",
+        "net9.0"
     ];
 
     private static readonly string[] EveryTfmWeAreConsidering =

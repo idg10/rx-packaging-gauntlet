@@ -23,7 +23,7 @@ internal class RunTransitiveFrameworkReferenceCheck(
 {
     private const string AppTempFolderName = "TransitiveFrameworkReference";
     private static readonly string TemplateProjectsParentFolder =
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../TransitiveReferences"));
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
     private static readonly string AppTemplateProject =
         Path.GetFullPath(Path.Combine(TemplateProjectsParentFolder, "Transitive.App/Transitive.App.csproj"));
     private static readonly string LibTemplateProject =
@@ -268,7 +268,8 @@ internal class RunTransitiveFrameworkReferenceCheck(
             }
             else
             {
-                Debugger.Break();
+                //Debugger.Break();
+                Console.WriteLine(r.BuildStdOut);
             }
             return new(r.BuildProcessExitCode, r.OutputFolder, r.BuildStdOut, runExitCode, runStdOut, runStdErr);
         }

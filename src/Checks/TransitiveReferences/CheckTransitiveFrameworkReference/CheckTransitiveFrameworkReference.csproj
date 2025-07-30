@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RxGauntlet.Common\RxGauntlet.Common.csproj" />
+    <ProjectReference Include="..\..\..\RxGauntlet.Common\RxGauntlet.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

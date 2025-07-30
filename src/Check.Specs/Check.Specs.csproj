@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CheckTransitiveFrameworkReference\CheckTransitiveFrameworkReference.csproj" />
+    <ProjectReference Include="..\Checks\TransitiveReferences\CheckTransitiveFrameworkReference\CheckTransitiveFrameworkReference.csproj" />
   </ItemGroup>
 
 </Project>

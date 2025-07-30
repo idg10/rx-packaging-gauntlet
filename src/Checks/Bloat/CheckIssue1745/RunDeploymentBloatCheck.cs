@@ -21,7 +21,7 @@ internal class RunDeploymentBloatCheck
             : scenario.BaseNetTfm;
 
         DirectoryInfo templateProjectFolder = new(
-            Path.Combine(AppContext.BaseDirectory, "../../../../Bloat/Bloat.ConsoleWinRtTemplate/"));
+            Path.Combine(AppContext.BaseDirectory, "../../../../Bloat.ConsoleWinRtTemplate/"));
 
 
         using (var projectClone = ModifiedProjectClone.Create(
