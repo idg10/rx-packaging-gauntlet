@@ -1,4 +1,8 @@
-﻿using NodaTime;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+using NodaTime;
 
 using Spectre.Console.Cli;
 
@@ -14,8 +18,8 @@ public abstract class TestCommandBase<TSettings> : AsyncCommand<TSettings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, TSettings settings)
     {
-        string testTimestampText = settings.TestTimestamp ?? DateTimeOffset.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss");
-        string testRunId = settings.TestRunId ?? $"{testTimestampText}-{System.Security.Cryptography.RandomNumberGenerator.GetHexString(8)}";
+        var testTimestampText = settings.TestTimestamp ?? DateTimeOffset.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss");
+        var testRunId = settings.TestRunId ?? $"{testTimestampText}-{System.Security.Cryptography.RandomNumberGenerator.GetHexString(8)}";
         var testDateTime = OffsetDateTime.FromDateTimeOffset(DateTimeOffset.ParseExact(
             testTimestampText,
             "yyyy-MM-dd_HH-mm-ss",
@@ -23,12 +27,12 @@ public abstract class TestCommandBase<TSettings> : AsyncCommand<TSettings>
             DateTimeStyles.AssumeUniversal));
 
         TestDetails testDetails = new(testDateTime, testRunId);
-        string outputPath = settings.OutputPath ?? DefaultOutputFilename;
+        var outputPath = settings.OutputPath ?? DefaultOutputFilename;
 
         using (FileStream output = new(outputPath, FileMode.Create, FileAccess.Write, FileShare.Read))
         using (Utf8JsonWriter jsonWriter = new(output, new JsonWriterOptions { Indented = true }))
         {
-            return await this.ExecuteTestAsync(testDetails, context, settings, jsonWriter);
+            return await ExecuteTestAsync(testDetails, context, settings, jsonWriter);
         }
     }
 

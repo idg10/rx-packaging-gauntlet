@@ -1,36 +1,38 @@
-﻿using CheckTransitiveFrameworkReference;
-using CheckTransitiveFrameworkReference.ScenarioGeneration;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT License.
+// See the LICENSE file in the project root for more information.
 
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+#pragma warning disable IDE0350 // Use implicitly typed lambda - in OneOf matches, it's typically easier to understand with explicit parameter types
+
+using CheckTransitiveFrameworkReference;
+using CheckTransitiveFrameworkReference.ScenarioGeneration;
 
 namespace Check.Specs.StepDefinitions;
 
 [Binding]
 public class AppDependenciesSteps
 {
-    private AppDependencies[]? dependenciesCombinations;
+    private AppDependencies[]? _dependenciesCombinations;
 
-    private AppDependencies[] DependenciesCombinations => this.dependenciesCombinations
+    private AppDependencies[] DependenciesCombinations => _dependenciesCombinations
         ?? throw new InvalidOperationException("Dependencies combinations have not been initialized. Please call the appropriate Given step first.");
 
     [Given("I get all the App Dependency combinations for upgrading an old Rx reference acquired transitively")]
     public void GivenIGetAllTheAppDependencyCombinationsForUpgradingAnOldRxReferenceAcquiredTransitively()
     {
-        this.dependenciesCombinations = AppDependenciesScenarioGeneration.GenerateOldTransitiveRefThenAddCombinations().ToArray();
+        _dependenciesCombinations = AppDependenciesScenarioGeneration.GenerateOldTransitiveRefThenAddCombinations().ToArray();
     }
 
     [Given("I get all the App Dependency combinations for upgrading a direct old Rx reference when an old transitive reference also exists")]
     public void GivenIGetAllTheAppDependencyCombinationsForUpgradingADirectOldRxReferenceWhenAnOldTransitiveReferenceAlsoExists()
     {
-        this.dependenciesCombinations = AppDependenciesScenarioGeneration.GenerateOldDirectAndTransitiveRefThenUpgradeCombinations().ToArray();
+        _dependenciesCombinations = AppDependenciesScenarioGeneration.GenerateOldDirectAndTransitiveRefThenUpgradeCombinations().ToArray();
     }
 
     [Given("I get all the App Dependency combinations for starting with a direct new Rx reference then adding an old transitive reference")]
     public void GivenIGetAllTheAppDependencyCombinationsForStartingWithADirectNewRxReferenceThenAddingAnOldTransitiveReference()
     {
-        this.dependenciesCombinations = AppDependenciesScenarioGeneration.GenerateNewDirectThenAddTransitiveRefToOldCombinations().ToArray();
+        _dependenciesCombinations = AppDependenciesScenarioGeneration.GenerateNewDirectThenAddTransitiveRefToOldCombinations().ToArray();
     }
 
     [Given("only the combinations where Before App Dependencies are exactly")]
@@ -59,17 +61,17 @@ public class AppDependenciesSteps
             dataTable.CreateSet<TransitiveRxReferenceViaLibrary>());
         HashSet<TransitiveRxReferenceViaLibrary> allAfterDependenciesSeen = new();
 
-        foreach (AppDependencies combination in this.DependenciesCombinations)
+        foreach (var combination in DependenciesCombinations)
         {
-            TransitiveRxReferenceViaLibrary? beforeOrNull = combination.RxBefore
+            var beforeOrNull = combination.RxBefore
                 .SelectMany<RxDependency, TransitiveRxReferenceViaLibrary?>(dep =>
-                    dep.TryGetTransitiveRxReferenceViaLibrary(out TransitiveRxReferenceViaLibrary r)
+                    dep.TryGetTransitiveRxReferenceViaLibrary(out var r)
                         ? [r] : [])
                 .SingleOrDefault();
 
-            TransitiveRxReferenceViaLibrary? afterOrNull = combination.RxAfter
+            var afterOrNull = combination.RxAfter
                 .SelectMany<RxDependency, TransitiveRxReferenceViaLibrary?>(dep =>
-                    dep.TryGetTransitiveRxReferenceViaLibrary(out TransitiveRxReferenceViaLibrary r)
+                    dep.TryGetTransitiveRxReferenceViaLibrary(out var r)
                         ? [r] : [])
                 .SingleOrDefault();
 
@@ -100,9 +102,9 @@ public class AppDependenciesSteps
         Table tableWithDependenciesToMatch,
         Func<AppDependencies, RxDependency[]> getActualDependencies)
     {
-        ExpectedAppDependencyRow[] expectedDependencies =
+        var expectedDependencies =
             tableWithDependenciesToMatch.CreateSet<ExpectedAppDependencyRow>().ToArray();
-        this.dependenciesCombinations = this.DependenciesCombinations
+        _dependenciesCombinations = DependenciesCombinations
             .Where(dep => DependenciesMatchExactly(expectedDependencies, getActualDependencies(dep)))
             .ToArray();
     }

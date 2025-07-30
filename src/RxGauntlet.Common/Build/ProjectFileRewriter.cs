@@ -1,4 +1,8 @@
-﻿using RxGauntlet.Xml;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+using RxGauntlet.Xml;
 
 using System.Xml;
 
@@ -6,16 +10,16 @@ namespace RxGauntlet.Build;
 
 public class ProjectFileRewriter
 {
-    private readonly XmlDocument document = new();
+    private readonly XmlDocument _document = new();
 
     private ProjectFileRewriter(string template)
     {
-        document.Load(template);
+        _document.Load(template);
     }
 
     public void SetTargetFramework(string targetFrameworkMoniker)
     {
-        XmlNode targetFrameworkNode = document.GetRequiredNode("/Project/PropertyGroup/TargetFramework");
+        var targetFrameworkNode = _document.GetRequiredNode("/Project/PropertyGroup/TargetFramework");
         targetFrameworkNode.InnerText = targetFrameworkMoniker;
     }
 
@@ -31,13 +35,13 @@ public class ProjectFileRewriter
 
     public void ReplaceProperty(string propertyName, string newValue)
     {
-        XmlNode propertyNode = document.GetRequiredNode($"/Project/PropertyGroup/{propertyName}");
+        var propertyNode = _document.GetRequiredNode($"/Project/PropertyGroup/{propertyName}");
         propertyNode.InnerText = newValue;
     }
 
     public void ReplacePackageReference(string packageId, PackageIdAndVersion[] replacementPackages)
     {
-        XmlNode packageRefNode = document.GetRequiredNode($"/Project/ItemGroup/PackageReference[@Include='{packageId}']");
+        var packageRefNode = _document.GetRequiredNode($"/Project/ItemGroup/PackageReference[@Include='{packageId}']");
 
         if (replacementPackages is [PackageIdAndVersion singleReplacement])
         {
@@ -56,21 +60,21 @@ public class ProjectFileRewriter
         string targetCsProjNameWithoutDirectory,
         PackageIdAndVersion[] replacementPackages)
     {
-        XmlNode projectRefNode = document.GetRequiredNode($"/Project/ItemGroup/ProjectReference[contains(@Include, '{targetCsProjNameWithoutDirectory}')]");
+        var projectRefNode = _document.GetRequiredNode($"/Project/ItemGroup/ProjectReference[contains(@Include, '{targetCsProjNameWithoutDirectory}')]");
         ReplaceNodeWithPackageReferences(projectRefNode, replacementPackages);
     }
 
     public void AddPropertyGroup(IEnumerable<KeyValuePair<string, string>> properties)
     {
-        XmlNode propertyGroupNode = document.CreateElement("PropertyGroup");
-        foreach ((string name, string value) in properties)
+        XmlNode propertyGroupNode = _document.CreateElement("PropertyGroup");
+        foreach ((var name, var value) in properties)
         {
-            XmlNode propertyNode = document.CreateElement(name);
+            XmlNode propertyNode = _document.CreateElement(name);
             propertyNode.InnerText = value;
             propertyGroupNode.AppendChild(propertyNode);
         }
 
-        document.SelectSingleNode("/Project")!.AppendChild(propertyGroupNode);
+        _document.SelectSingleNode("/Project")!.AppendChild(propertyGroupNode);
     }
 
     public void AddUseUiFrameworksIfRequired(bool? useWpf, bool? useWindowsForms)
@@ -95,17 +99,17 @@ public class ProjectFileRewriter
 
     internal void WriteModified(string destinationPath)
     {
-        document.Save(destinationPath);
+        _document.Save(destinationPath);
     }
 
     private static void ReplaceNodeWithPackageReferences(
         XmlNode nodeToReplace,
         PackageIdAndVersion[] replacementPackages)
     {
-        XmlNode packageRefItemGroup = nodeToReplace.ParentNode!;
+        var packageRefItemGroup = nodeToReplace.ParentNode!;
         packageRefItemGroup.RemoveChild(nodeToReplace);
 
-        foreach (PackageIdAndVersion packageIdAndVersion in replacementPackages)
+        foreach (var packageIdAndVersion in replacementPackages)
         {
             XmlNode rxNewPackageRefNode = packageRefItemGroup.OwnerDocument!.CreateElement("PackageReference");
             rxNewPackageRefNode.SetAttribute("Include", packageIdAndVersion.PackageId);
@@ -121,12 +125,12 @@ public class ProjectFileRewriter
 
     public void FixUpProjectReferences(string templateProjectFolder)
     {
-        if (document.SelectNodes("/Project/ItemGroup/ProjectReference") is XmlNodeList projectReferences)
+        if (_document.SelectNodes("/Project/ItemGroup/ProjectReference") is XmlNodeList projectReferences)
         {
-            foreach (XmlElement projectReference in projectReferences.OfType<XmlElement>())
+            foreach (var projectReference in projectReferences.OfType<XmlElement>())
             {
-                string relativePath = projectReference.GetAttribute("Include");
-                string absolutePath = Path.GetFullPath(Path.Combine(templateProjectFolder, relativePath));
+                var relativePath = projectReference.GetAttribute("Include");
+                var absolutePath = Path.GetFullPath(Path.Combine(templateProjectFolder, relativePath));
                 projectReference.SetAttribute("Include", absolutePath);
             }
         }

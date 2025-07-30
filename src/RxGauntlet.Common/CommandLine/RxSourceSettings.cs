@@ -1,4 +1,8 @@
-﻿using RxGauntlet.Build;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT License.
+// See the LICENSE file in the project root for more information.
+
+using RxGauntlet.Build;
 
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -31,7 +35,7 @@ public class RxSourceSettings : CommandSettings
     public string[] RxUiFrameworkPackages { get; init; } = [];
 
     public PackageIdAndVersion RxMainPackageParsed => GetParsedPackage(ref _parsedRxMainPackage);
-    public PackageIdAndVersion? RxLegacyPackageParsed => this.RxLegacyPackage is null
+    public PackageIdAndVersion? RxLegacyPackageParsed => RxLegacyPackage is null
         ? null
         : GetParsedPackage(ref _parsedRxLegacyPackage);
 
@@ -50,7 +54,7 @@ public class RxSourceSettings : CommandSettings
             }
             else
             {
-                ValidationResult rxPackagesValidationResult = Validate();
+                var rxPackagesValidationResult = Validate();
                 if (!rxPackagesValidationResult.Successful)
                 {
                     throw new InvalidOperationException($"Settings are invalid: {rxPackagesValidationResult.Message}");
@@ -70,12 +74,12 @@ public class RxSourceSettings : CommandSettings
     /// <returns></returns>
     public PackageIdAndVersion[] GetAllParsedPackages() =>
         [
-            this.RxMainPackageParsed,
+            RxMainPackageParsed,
 
-            ..this.RxLegacyPackageParsed is PackageIdAndVersion legacy
+            ..RxLegacyPackageParsed is PackageIdAndVersion legacy
                 ? [legacy] : Array.Empty<PackageIdAndVersion>(),
 
-            ..this.RxUiFrameworkPackagesParsed
+            ..RxUiFrameworkPackagesParsed
         ];
 
     /// <summary>
@@ -91,22 +95,22 @@ public class RxSourceSettings : CommandSettings
         // in an unsupported way (probably not via Spectre.Console) so we throw instead of reporting a validation
         // failure.
 
-        if (this.RxMainPackage is not string rxMainPackage)
+        if (RxMainPackage is not string rxMainPackage)
         {
             throw new InvalidOperationException($"{nameof(RxMainPackage)} must not be null.");
         }
 
-        if (this.RxUiFrameworkPackages is not string[] rxUiPackages)
+        if (RxUiFrameworkPackages is not string[] rxUiPackages)
         {
             throw new InvalidOperationException($"{nameof(RxUiFrameworkPackages)}  must not be null.");
         }
 
         if (!PackageIdAndVersion.TryParse(rxMainPackage, out _parsedRxMainPackage))
         {
-            return ValidationResult.Error($"Invalid package specification: {this.RxMainPackage}. Must be <PackageId>,<Version>");
+            return ValidationResult.Error($"Invalid package specification: {RxMainPackage}. Must be <PackageId>,<Version>");
         }
 
-        if (this.RxLegacyPackage is string rxLegacyPackage &&
+        if (RxLegacyPackage is string rxLegacyPackage &&
             !PackageIdAndVersion.TryParse(rxLegacyPackage, out _parsedRxLegacyPackage))
         {
             return ValidationResult.Error($"Invalid package specification: {rxLegacyPackage}. Must be <PackageId>,<Version>");
@@ -114,9 +118,9 @@ public class RxSourceSettings : CommandSettings
 
         HashSet<string> uiPackageIdsSeen = new(capacity: rxUiPackages.Length);
         var uiPackageIdsAndVersions = new PackageIdAndVersion[rxUiPackages.Length];
-        for (int i = 0; i < rxUiPackages.Length; i++)
+        for (var i = 0; i < rxUiPackages.Length; i++)
         {
-            if (!PackageIdAndVersion.TryParse(rxUiPackages[i], out PackageIdAndVersion? packageIdAndVersion))
+            if (!PackageIdAndVersion.TryParse(rxUiPackages[i], out var packageIdAndVersion))
             {
                 return ValidationResult.Error($"Invalid package specification: {rxUiPackages[i]}. Must be <PackageId>,<Version>");
             }
@@ -135,7 +139,7 @@ public class RxSourceSettings : CommandSettings
     {
         if (field is null)
         {
-            ValidationResult rxPackagesValidationResult = Validate();
+            var rxPackagesValidationResult = Validate();
 
             if (field is null && !rxPackagesValidationResult.Successful)
             {
