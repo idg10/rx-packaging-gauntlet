@@ -15,6 +15,21 @@ using System.Text.Json;
 
 namespace CheckDisableTransitiveFailingExtensionMethod;
 
+
+/// <summary>
+/// Implements the only command offered by this program.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This builds a list of all the scenarios that need to be tested. Executes each one, and appends
+/// the results into the output JSON file.
+/// </para>
+/// <para>
+/// For each scenario, this creates a copy of the <c>CheckDisableTransitiveFailingExtensionMethod</c>
+/// project, modifying settings according to the scenario being tested, and then tries to build it.
+/// It reports any build failures.
+/// </para>
+/// </remarks>
 internal sealed class CheckDisableTransitiveFailingExtensionMethodCommand : TestCommandBase<TestSettings>
 {
     protected override string DefaultOutputFilename => "CheckExtensionMethodsWorkaround.json";

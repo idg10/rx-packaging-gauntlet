@@ -10,6 +10,13 @@ using Spectre.Console.Cli;
 
 namespace CheckIssue1745;
 
+/// <summary>
+/// Implements the only command offered by this program.
+/// </summary>
+/// <remarks>
+/// This builds a list of all the scenarios that need to be tested. It defers to <see cref="RunDeploymentBloatCheck"/>
+/// to perform the actual test logic for each scenario, and appends the results into the output JSON file.
+/// </remarks>
 internal class CheckDeploymentBloatCommand : TestCommandBase<TestSettings>
 {
     protected override string DefaultOutputFilename => "CheckIssue1745.json";

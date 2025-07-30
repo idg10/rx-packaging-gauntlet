@@ -13,6 +13,32 @@ using System.Diagnostics;
 
 namespace CheckTransitiveFrameworkReference;
 
+/// <summary>
+/// Executes the test logic for one scenario.
+/// </summary>
+/// <param name="testRunId">
+/// The unique test id to include in the output (which will eventually be written to the JSON output file).
+/// </param>
+/// <param name="testRunDateTime">
+/// The test timestamp to include in the output (which will eventually be written to the JSON output file).
+/// </param>
+/// <param name="rxMainPackage">
+/// The main Rx.NET package reference.
+/// </param>
+/// <param name="rxLegacyPackage">
+/// The <c>System.Reactive</c> package details if that package has been relegated to a legacy facade, null otherwise.
+/// </param>
+/// <param name="rxUiPackages">
+/// A list of the UI-framework-specific packages for the version of Rx.NET under test.
+/// </param>
+/// <param name="additionalPackageSources">
+/// A list of NuGet feeds from which to download packages.
+/// </param>
+/// <remarks>
+/// In order to test transitive dependencies, this builds variations of the <c>Transitive.Lib.UsesRx</c> project
+/// and then adds them to a temporary local NuGet feed. It then builds a version of the <c>Transitive.App</c>
+/// project modified to use that feed, and the NuGet packages built for this scenario.
+/// </remarks>
 internal class RunTransitiveFrameworkReferenceCheck(
     string testRunId,
     OffsetDateTime testRunDateTime,

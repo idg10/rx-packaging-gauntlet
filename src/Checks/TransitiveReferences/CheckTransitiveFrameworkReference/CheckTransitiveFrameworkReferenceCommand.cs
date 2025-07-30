@@ -11,10 +11,16 @@ using System.Text.Json;
 namespace CheckTransitiveFrameworkReference;
 
 /// <summary>
-/// Main command.
+/// Implements the only command offered by this program.
 /// </summary>
 /// <remarks>
-/// 
+/// <para>
+/// This builds a list of all the scenarios that need to be tested. It defers to <see cref="RunTransitiveFrameworkReferenceCheck"/>
+/// to perform the actual test logic for each scenario, and appends the results into the output JSON file.
+/// </para>
+/// <para>
+/// Note that this produces hundreds of scenarios, so this check can take a while to run.
+/// </para>
 /// </remarks>
 internal class CheckTransitiveFrameworkReferenceCommand : TestCommandBase<TestSettings>
 {

@@ -4,6 +4,12 @@
 
 namespace RxGauntlet.Cli;
 
+/// <summary>
+/// Handles the CLI's <c>test-candidate</c> command.
+/// </summary>
+/// <remarks>
+/// This is the command used when running a candidate new release of Rx.NET through the Gauntlet.
+/// </remarks>
 internal class RxGauntletCandidateCommand : RxGauntletCommandBase<RxGauntletCandidateCommandSettings>
 {
     protected override TestRunPackageSelection[] GetPackageSelection(RxGauntletCandidateCommandSettings settings)

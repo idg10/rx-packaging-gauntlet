@@ -10,6 +10,14 @@ using System.Text.Json;
 
 namespace CheckIssue97;
 
+/// <summary>
+/// Implements the only command offered by this program.
+/// </summary>
+/// <remarks>
+/// This defers to <see cref="RunCheckPluginIssue97"/> to execute all the scenarios, so this type's
+/// job is just to supply the start and end of the array in the JSON output, and to pass the command
+/// line arguments in a form convenient to the test logic.
+/// </remarks>
 internal class CheckPluginIssue97Command : TestCommandBase<TestSettings>
 {
     protected override string DefaultOutputFilename => "CheckPluginIssue97.json";

@@ -15,6 +15,18 @@ using RxGauntlet.Build;
 
 namespace CheckIssue97;
 
+/// <summary>
+/// Determines which pairs of plug-in TFMs to test.
+/// </summary>
+/// <remarks>
+/// There are many TFMs a plug-in could target, but for any particular version of Rx.NET, most of these will
+/// resolve to the same target assembly in Rx.NET. (E.g., with Rx 6.0.1, it is not useful building both
+/// a net472 and a net481 plug-in because both end up resolving to the net472 Rx target). So this determines
+/// a minimal set of TFMs where each produces a plug-in that resolves to a different Rx.NET target. It then
+/// reports a series of pairings in which the first and second plug-in will use different Rx.NET targets.
+/// Note that order is significant, so for any pair of TFMs this produces, it will also produce the
+/// same pair in reverse order.
+/// </remarks>
 internal class PlugInTargetSelection
 {
     private static readonly string[] HostRuntimes =

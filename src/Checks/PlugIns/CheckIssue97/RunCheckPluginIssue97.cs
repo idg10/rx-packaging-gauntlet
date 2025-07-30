@@ -16,6 +16,14 @@ using System.Text.Json;
 
 namespace CheckIssue97;
 
+/// <summary>
+/// Implements the plug-in tests.
+/// </summary>
+/// <remarks>
+/// This runs for every plug-in TFM pair produced by <see cref="PlugInTargetSelection.GetPlugInTfmPairingsAsync(PackageIdAndVersion[], string?)"/>.
+/// For each such pair, it builds plug-ins that use the version of Rx.NET under test, and which target the specified TFMs, and then runs the
+/// plug-in host, telling it to load both plug-ins. It then writes the observations made by the test runner into the JSON output.
+/// </remarks>
 internal class RunCheckPluginIssue97
 {
     public static async Task RunAsync(

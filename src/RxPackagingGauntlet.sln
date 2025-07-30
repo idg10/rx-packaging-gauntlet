@@ -48,6 +48,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExtensionMethods.DisableTransitiveWorkaroundFail", "Checks\ExtensionMethods\ExtensionMethods.DisableTransitiveWorkaroundFail\ExtensionMethods.DisableTransitiveWorkaroundFail.csproj", "{9C19F572-AB45-49B1-9E35-7C26C24EE2F1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxGauntlet", "RxGauntlet\RxGauntlet.csproj", "{D60CE019-6A34-4240-8A2D-28790613C308}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6C7F5D97-E217-45E5-82A9-583831798A26} = {6C7F5D97-E217-45E5-82A9-583831798A26}
+		{771FA827-01A1-40E6-B33D-07E5BA7DC15E} = {771FA827-01A1-40E6-B33D-07E5BA7DC15E}
+		{81310AF4-AED2-4507-BBC0-B989F482EB7B} = {81310AF4-AED2-4507-BBC0-B989F482EB7B}
+		{C81605FB-12B5-448C-947B-4340F6CEADEC} = {C81605FB-12B5-448C-947B-4340F6CEADEC}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlugIn", "Checks\PlugIns\PlugIn\PlugIn.csproj", "{A2A74A9C-66BD-41DC-AE58-BA68CDA62C7A}"
 EndProject
